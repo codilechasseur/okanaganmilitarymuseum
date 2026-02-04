@@ -8,11 +8,11 @@ namespace The_SEO_Framework\Admin\SEOBar;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Data;
+use The_SEO_Framework\Data;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -58,13 +58,15 @@ final class Builder {
 
 	/**
 	 * @since 4.0.0
-	 * @var array $item The current SEO Bar item list. {
-	 *    string $symbol : The displayed symbol that identifies your bar.
-	 *    string $title  : The title of the assessment.
-	 *    string $status : Accepts 'good', 'okay', 'bad', 'unknown'.
-	 *    string $reason : The final assessment: The reason for the $status.
-	 *    string $assess : The assessments on why the reason is set. Keep it short and concise!
-	 *                     Does not accept HTML for performant ARIA support.
+	 * @var array $item {
+	 *     The current SEO Bar item list.
+	 *
+	 *     @type string $symbol The displayed symbol that identifies your bar.
+	 *     @type string $title  The title of the assessment.
+	 *     @type int    $status Power of two. See SEOBar's class constants.
+	 *     @type string $reason The final assessment: The reason for the $status. The latest state-changing reason is used.
+	 *     @type string $assess The assessments on why the reason is set. Keep it short and concise!
+	 *                          Does not accept HTML for performant ARIA support.
 	 * }
 	 */
 	private static $items = [];
@@ -81,19 +83,21 @@ final class Builder {
 	 * @since 4.0.0
 	 * @since 4.1.4 Now manages the builder, too.
 	 *
-	 * @param array $query : {
-	 *   int    $id        : Required. The current post or term ID.
-	 *   string $tax       : Optional. If not set, this will interpret it as a post.
-	 *   string $pta       : Not implemented. Do not populate.
-	 *   string $post_type : Optional. If not set, this will be automatically filled.
-	 *                                 This parameter is ignored for taxonomies.
+	 * @param array $query {
+	 *     The query arguments for the SEO Bar.
+	 *
+	 *     @type int    $id        Required. The current post or term ID.
+	 *     @type string $tax       Optional. If not set, this will interpret it as a post.
+	 *     @type string $pta       Not implemented. Do not populate.
+	 *     @type string $post_type Optional. If not set, this will be automatically filled.
+	 *                             This parameter is ignored for taxonomies.
 	 * }
 	 * @return string The SEO Bar.
 	 */
 	public static function generate_bar( $query ) {
 
 		// Link the input query for action hooks.
-		static::$query = &$query;
+		self::$query = &$query;
 
 		$query += [
 			'id'        => 0,
@@ -124,9 +128,9 @@ final class Builder {
 		 * @param string                                       $interpreter The current class name.
 		 * @param \The_SEO_Framework\Admin\SEOBar\Builder\Main $builder     The builder object.
 		 */
-		\do_action( 'the_seo_framework_prepare_seo_bar', static::class, $builder );
+		\do_action( 'the_seo_framework_prepare_seo_bar', self::class, $builder );
 
-		$items = &static::collect_seo_bar_items();
+		$items = &self::collect_seo_bar_items();
 
 		foreach ( $builder->run_all_tests( $query ) as $key => $data )
 			$items[ $key ] = $data;
@@ -140,12 +144,12 @@ final class Builder {
 		 * @param string $interpreter The interpreter class name.
 		 * @param object $builder     The builder's class instance.
 		 */
-		\do_action( 'the_seo_framework_seo_bar', static::class, $builder );
+		\do_action( 'the_seo_framework_seo_bar', self::class, $builder );
 
-		$bar = static::create_seo_bar( static::$items );
+		$bar = self::create_seo_bar( self::$items );
 
 		// There's no need to leak memory.
-		static::$items = [];
+		self::$items = [];
 		$builder->clear_query_cache();
 
 		return $bar;
@@ -158,17 +162,18 @@ final class Builder {
 	 * @since 4.1.1 Is now static.
 	 * @collector
 	 *
-	 * @return array SEO Bar items. Passed by reference. {
-	 *    string $symbol : The displayed symbol that identifies your bar.
-	 *    string $title  : The title of the assessment.
-	 *    string $status : Accepts 'good', 'okay', 'bad', 'unknown'.
-	 *    string $reason : The final assessment: The reason for the $status.
-	 *    string $assess : The assessments on why the reason is set. Keep it short and concise!
-	 *                     Does not accept HTML for performant ARIA support.
+	 * @return array {
+	 *     An array of SEO Bar items.
+	 *
+	 *     @type string $symbol The displayed symbol that identifies your bar.
+	 *     @type string $title  The title of the assessment.
+	 *     @type string $status Either 'good', 'okay', 'bad', or 'unknown'.
+	 *     @type string $reason The final assessment: The reason for the $status.
+	 *     @type string $assess The assessments on why the reason is set.
 	 * }
 	 */
 	public static function &collect_seo_bar_items() {
-		return static::$items;
+		return self::$items;
 	}
 
 	/**
@@ -176,18 +181,20 @@ final class Builder {
 	 *
 	 * @since 4.0.0
 	 *
-	 * @param string $key The item key.
-	 * @param array  $item : {
-	 *    string $symbol : Required. The displayed symbol that identifies your bar.
-	 *    string $title  : Required. The title of the assessment.
-	 *    string $status : Required. Accepts 'good', 'okay', 'bad', 'unknown'.
-	 *    string $reason : Required. The final assessment: The reason for the $status.
-	 *    string $assess : Required. The assessments on why the reason is set. Keep it short and concise!
-	 *                               Does not accept HTML for performant ARIA support.
+	 * @param string $key  The item key.
+	 * @param array  $item {
+	 *     The SEO Bar item.
+	 *
+	 *     @type string $symbol Required. The displayed symbol that identifies your bar.
+	 *     @type string $title  Required. The title of the assessment.
+	 *     @type string $status Required. Accepts 'good', 'okay', 'bad', 'unknown'.
+	 *     @type string $reason Required. The final assessment: The reason for the $status.
+	 *     @type string $assess Required. The assessments on why the reason is set. Keep it short and concise!
+	 *                          Does not accept HTML for performant ARIA support.
 	 * }
 	 */
 	public static function register_seo_bar_item( $key, $item ) {
-		static::$items[ $key ] = $item;
+		self::$items[ $key ] = $item;
 	}
 
 	/**
@@ -208,8 +215,8 @@ final class Builder {
 		 */
 		static $_void = [];
 
-		if ( isset( static::$items[ $key ] ) ) { // Do not write to referenced var before this is tested!
-			$_item = &static::$items[ $key ];
+		if ( isset( self::$items[ $key ] ) ) { // Do not write to referenced var before this is tested!
+			$_item = &self::$items[ $key ];
 		} else {
 			$_void = [];
 			$_item = &$_void;
@@ -232,13 +239,13 @@ final class Builder {
 
 		$blocks = [];
 
-		foreach ( static::generate_seo_bar_blocks( $items ) as $block )
+		foreach ( self::generate_seo_bar_blocks( $items ) as $block )
 			$blocks[] = $block;
 
 		// Always return the wrap, may it be filled in via JS in the future.
-		return sprintf(
+		return \sprintf(
 			'<div class="tsf-seo-bar tsf-tooltip-super-wrap"><span class=tsf-seo-bar-inner-wrap>%s</span></div>',
-			implode( $blocks )
+			implode( $blocks ),
 		);
 	}
 
@@ -276,35 +283,35 @@ final class Builder {
 		foreach ( $items as $item ) {
 
 			switch ( $item['status'] ) {
-				case static::STATE_GOOD:
+				case self::STATE_GOOD:
 					$status = 'good';
 					break;
-				case static::STATE_OKAY:
+				case self::STATE_OKAY:
 					$status = 'okay';
 					break;
-				case static::STATE_BAD:
+				case self::STATE_BAD:
 					$status = 'bad';
 					break;
-				case static::STATE_UNKNOWN:
+				case self::STATE_UNKNOWN:
 					$status = 'unknown';
 					break;
-				case static::STATE_UNDEFINED:
+				case self::STATE_UNDEFINED:
 				default:
 					$status = 'undefined';
 			}
 
-			if ( $use_symbols && $item['status'] ^ static::STATE_GOOD ) {
+			if ( $use_symbols && $item['status'] ^ self::STATE_GOOD ) {
 				switch ( $item['status'] ) {
-					case static::STATE_OKAY:
+					case self::STATE_OKAY:
 						$symbol = '!?';
 						break;
-					case static::STATE_BAD:
+					case self::STATE_BAD:
 						$symbol = '!!';
 						break;
-					case static::STATE_UNKNOWN:
+					case self::STATE_UNKNOWN:
 						$symbol = '??';
 						break;
-					case static::STATE_UNDEFINED:
+					case self::STATE_UNDEFINED:
 					default:
 						$symbol = '--';
 				}
@@ -312,15 +319,15 @@ final class Builder {
 				$symbol = $item['symbol'];
 			}
 
-			$html = sprintf(
+			$html = \sprintf(
 				'<strong>%s:</strong> %s<br>%s',
 				$item['title'],
 				$item['reason'],
-				sprintf(
+				\sprintf(
 					'<ol>%s</ol>',
 					implode(
 						'',
-						array_map( static fn( $a ) => "<li>$a</li>", $item['assess'] )
+						array_map( static fn( $a ) => "<li>$a</li>", $item['assess'] ),
 					),
 				),
 			);
@@ -333,22 +340,22 @@ final class Builder {
 			} else {
 				$i = 0;
 				foreach ( $item['assess'] as $text ) {
-					$assessments[] = sprintf( $gettext['enum'], ++$i, $text );
+					$assessments[] = \sprintf( $gettext['enum'], ++$i, $text );
 				}
 			}
 
-			$aria = sprintf(
+			$aria = \sprintf(
 				$gettext['aria'],
 				$item['title'],
 				$item['reason'],
-				sprintf(
+				\sprintf(
 					$gettext['list'],
 					$count < 2 ? $gettext['assessment'] : $gettext['assessments'],
 					implode( ' ', $assessments ),
 				),
 			);
 
-			yield sprintf(
+			yield \sprintf(
 				'<span class="tsf-seo-bar-section-wrap tsf-tooltip-wrap"><span class="tsf-seo-bar-item tsf-tooltip-item tsf-seo-bar-%1$s" title="%2$s" aria-label="%2$s" data-desc="%3$s" tabindex=0>%4$s</span></span>',
 				$status,
 				\esc_attr( $aria ),

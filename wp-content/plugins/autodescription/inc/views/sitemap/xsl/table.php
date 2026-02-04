@@ -6,13 +6,13 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -34,13 +34,13 @@ $vars  = [
 $empty = array_fill_keys( [ 'th', 'td' ], '' );
 
 $url = [
-	'th' => sprintf( '<th>%s</th>', \esc_xml( \__( 'URL', 'autodescription' ) ) ),
+	'th' => \sprintf( '<th>%s</th>', \esc_xml( \__( 'URL', 'autodescription' ) ) ),
 	'td' => '<td><a href="{$itemURL}"><xsl:choose><xsl:when test="string-length($itemURL)&gt;95"><xsl:value-of select="substring($itemURL,0,93)" />...</xsl:when><xsl:otherwise><xsl:value-of select="$itemURL" /></xsl:otherwise></xsl:choose></a></td>',
 ];
 
 if ( \The_SEO_Framework\Data\Plugin::get_option( 'sitemaps_modified' ) ) {
 	$last_updated = [
-		'th' => sprintf( '<th>%s</th>', \esc_xml( \__( 'Last Updated', 'autodescription' ) ) ),
+		'th' => \sprintf( '<th>%s</th>', \esc_xml( \__( 'Last Updated', 'autodescription' ) ) ),
 		'td' => '<td><xsl:value-of select="$lastmod" /></td>',
 	];
 } else {
@@ -48,7 +48,7 @@ if ( \The_SEO_Framework\Data\Plugin::get_option( 'sitemaps_modified' ) ) {
 	unset( $vars['lastmod'] );
 }
 
-// phpcs:disable, WordPress.Security.EscapeOutput, output is escaped.
+// phpcs:disable WordPress.Security.EscapeOutput, output is escaped.
 ?>
 <table>
 	<thead>

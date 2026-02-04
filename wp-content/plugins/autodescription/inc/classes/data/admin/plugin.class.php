@@ -8,16 +8,17 @@ namespace The_SEO_Framework\Data\Admin;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\{
-	Admin, // Yes, it ios legal to share class and namespace.
+use The_SEO_Framework\{
+	Admin, // Yes, it is legal to share class and namespace.
 	Data,
 	Helper\Query,
+	Helper\Format\Arrays,
 	Sitemap,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -38,7 +39,7 @@ use \The_SEO_Framework\{
  * @since 5.0.0
  * @access private
  */
-class Plugin {
+final class Plugin {
 
 	/**
 	 * Register the database settings for saving and sanitizing via standard WordPress hooks.
@@ -83,9 +84,9 @@ class Plugin {
 		\check_admin_referer( \THE_SEO_FRAMEWORK_SITE_OPTIONS . '-options', '_wpnonce' );
 
 		if ( ! empty( $_POST[ \THE_SEO_FRAMEWORK_SITE_OPTIONS ]['tsf-settings-reset'] ) ) {
-			static::process_settings_reset();
+			self::process_settings_reset();
 		} else {
-			static::process_settings_submission();
+			self::process_settings_submission();
 		}
 	}
 
@@ -93,15 +94,20 @@ class Plugin {
 	 * Resets options on request.
 	 *
 	 * @since 5.0.0
+	 * @since 5.1.0 1. Now differentiates the options independently of the order.
+	 *              2. Now resets options regardless of whether settings are changed from defaults.
 	 *
 	 * @return void Early if not on SEO settings page.
 	 */
 	private static function process_settings_reset() {
 
-		if ( Data\Plugin::get_options() === Data\Plugin\Setup::get_default_options() ) {
-			$state = 'unchanged';
-		} else {
+		if ( Arrays::array_diff_assoc_recursive( Data\Plugin::get_options(), Data\Plugin\Setup::get_default_options() ) ) {
+			// Settings are different from default, try resetting.
 			$state = Data\Plugin\Setup::reset_options() ? 'reset' : 'error';
+		} else {
+			// Proceed user intent thoroughly. Reset anyway yet say nothing's changed.
+			Data\Plugin\Setup::reset_options();
+			$state = 'unchanged';
 		}
 
 		Sitemap\Registry::refresh_sitemaps();
@@ -134,7 +140,7 @@ class Plugin {
 		/* // phpcs:ignore -- Nothing to set backward compat for, still in place because API is enforced.
 		\add_filter(
 			'pre_update_option_' . \THE_SEO_FRAMEWORK_SITE_OPTIONS,
-			[ static::class, 'set_backward_compatibility' ],
+			[ self::class, 'set_backward_compatibility' ],
 		);
 		*/
 
@@ -148,14 +154,16 @@ class Plugin {
 		// Sets that the options are unchanged, preemptively.
 		Data\Plugin::update_site_cache( 'settings_notice', 'unchanged' );
 		// But, if this action fires, we can assure that the settings have been changed (according to WP).
+		// WordPress resorts the settings array; so, right after a save, we do claim that the settings are updated.
+		// This is benign.
 		\add_action(
 			'update_option_' . \THE_SEO_FRAMEWORK_SITE_OPTIONS,
-			[ static::class, 'set_option_updated_notice' ],
+			[ self::class, 'set_option_updated_notice' ],
 		);
 
 		\add_action(
 			'update_option_' . \THE_SEO_FRAMEWORK_SITE_OPTIONS,
-			[ static::class, 'update_db_version' ],
+			[ self::class, 'update_db_version' ],
 			12,
 		);
 
@@ -193,7 +201,7 @@ class Plugin {
 	 * @since 5.0.0 Moved from `\The_SEO_Framework\Load`.
 	 */
 	public static function update_db_version() {
-		\update_option( 'the_seo_framework_upgraded_db_version', \THE_SEO_FRAMEWORK_DB_VERSION );
+		\update_option( 'the_seo_framework_upgraded_db_version', \THE_SEO_FRAMEWORK_DB_VERSION, true );
 	}
 
 	/**

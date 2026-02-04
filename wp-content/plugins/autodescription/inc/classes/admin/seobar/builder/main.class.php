@@ -10,7 +10,7 @@ namespace The_SEO_Framework\Admin\SEOBar\Builder;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -37,10 +37,12 @@ namespace The_SEO_Framework\Admin\SEOBar\Builder;
  *
  * @since 4.0.0
  * @since 4.2.0 Renamed from `SeoBar`.
- * @since 5.0.0 Moved from `\The_SEO_Framework\Builders\SEOBar`.
+ * @since 5.0.0 Moved from `\\The_SEO_Framework\\Builders\\SEOBar`.
  *
  * @access private
- * @see \The_SEO_Framework\Admin\SEOBar\Builder
+ * @see \\The_SEO_Framework\\Admin\\SEOBar\\Builder
+ *
+ * @NOTE: All static:: calls within this class are intentional to allow overrides in subclasses.
  */
 abstract class Main {
 
@@ -99,7 +101,7 @@ abstract class Main {
 	 * @return static
 	 */
 	final public static function get_instance() {
-		return static::$instance ??= new static;
+		return static::$instance ??= new static; // static: allow overrides
 	}
 
 	/**
@@ -137,14 +139,16 @@ abstract class Main {
 	 * @access private
 	 * @generator
 	 *
-	 * @param array $query : {
-	 *   int    $id        : Required. The current post or term ID.
-	 *   string $taxonomy  : Optional. If not set, this will interpret it as a post.
-	 *   string $post_type : Optional. If not set, this will be automatically filled.
-	 *                                 This parameter is ignored for taxonomies.
+	 * @param array $query {
+	 *     The query parameters.
+	 *
+	 *     @type int    $id        Required. The current post or term ID.
+	 *     @type string $taxonomy  Optional. If not set, this will interpret it as a post.
+	 *     @type string $post_type Optional. If not set, this will be automatically filled.
+	 *                             This parameter is ignored for taxonomies.
 	 * }
-	 * @yield array : {
-	 *    string $test => array The testing results.
+	 * @yield array {
+	 *     @type array {$test} The testing results.
 	 * }
 	 */
 	public function run_all_tests( $query ) {
@@ -160,22 +164,24 @@ abstract class Main {
 	 * @access private
 	 * @generator
 	 *
-	 * @param array|string $tests The test(s) to perform.
-	 * @param array        $query  : {
-	 *   int    $id        : Required. The current post or term ID.
-	 *   string $taxonomy  : Optional. If not set, this will interpret it as a post.
-	 *   string $post_type : Optional. If not set, this will be automatically filled.
-	 *                                 This parameter is ignored for taxonomies.
+	 * @param string|string[] $tests The test(s) to perform.
+	 * @param array           $query {
+	 *     The query parameters.
+	 *
+	 *     @type int    $id        Required. The current post or term ID.
+	 *     @type string $taxonomy  Optional. If not set, this will interpret it as a post.
+	 *     @type string $post_type Optional. If not set, this will be automatically filled.
+	 *                             This parameter is ignored for taxonomies.
 	 * }
-	 * @yield array : {
-	 *    string $test => array $item The SEO Bar compatible results.
+	 * @yield array {
+	 *     @type array {$test} The testing results.
 	 * }
 	 */
 	final public function run_test( $tests, $query ) {
 
-		$tests = array_intersect( static::$tests, (array) $tests );
+		$tests = array_intersect( static::$tests, (array) $tests ); // static: allow overrides
 
-		static::$query = $query;
+		static::$query = $query; // static: allow overrides
 
 		$this->prime_query_cache();
 

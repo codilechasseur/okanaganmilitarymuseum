@@ -2,22 +2,23 @@
 /**
  * @package The_SEO_Framework\Compat\Plugin\WPML
  * @subpackage The_SEO_Framework\Compatibility
+ * @access private
  */
 
 namespace The_SEO_Framework;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Helper\Query,
 	Meta\URI,
 };
 
-\add_filter( 'the_seo_framework_sitemap_endpoint_list', __NAMESPACE__ . '\\_wpml_register_sitemap_languages', 20 );
-\add_action( 'the_seo_framework_cleared_sitemap_transients', __NAMESPACE__ . '\\_wpml_flush_sitemap', 10 );
-\add_action( 'the_seo_framework_sitemap_header', __NAMESPACE__ . '\\_wpml_sitemap_filter_display_translatables' );
-\add_action( 'the_seo_framework_sitemap_hpt_query_args', __NAMESPACE__ . '\\_wpml_sitemap_filter_non_translatables' );
-\add_action( 'the_seo_framework_sitemap_nhpt_query_args', __NAMESPACE__ . '\\_wpml_sitemap_filter_non_translatables' );
+\add_filter( 'the_seo_framework_sitemap_endpoint_list', __NAMESPACE__ . '\_wpml_register_sitemap_languages', 20 );
+\add_action( 'the_seo_framework_cleared_sitemap_transients', __NAMESPACE__ . '\_wpml_flush_sitemap', 10 );
+\add_action( 'the_seo_framework_sitemap_header', __NAMESPACE__ . '\_wpml_sitemap_filter_display_translatables' );
+\add_action( 'the_seo_framework_sitemap_hpt_query_args', __NAMESPACE__ . '\_wpml_sitemap_filter_non_translatables' );
+\add_action( 'the_seo_framework_sitemap_nhpt_query_args', __NAMESPACE__ . '\_wpml_sitemap_filter_non_translatables' );
 
 /**
  * Registeres more sitemaps for the robots.txt to parse.
@@ -27,17 +28,17 @@ use \The_SEO_Framework\{
  *
  * @hook the_seo_framework_sitemap_endpoint_list 20
  * @since 5.0.5
- * @param array[] $list The endpoints: {
- *   'id' => array: {
- *      'lock_id'  => string|false Optional. The cache key to use for locking. Defaults to index 'id'.
- *                                           Set to false to disable locking.
- *      'cache_id' => string|false Optional. The cache key to use for storing. Defaults to index 'id'.
- *                                           Set to false to disable caching.
- *      'endpoint' => string       The expected "pretty" endpoint, meant for administrative display.
- *      'epregex'  => string       The endpoint regex, following the home path regex.
- *      'callback' => callable     The callback for the sitemap output.
- *      'robots'   => bool         Whether the endpoint should be mentioned in the robots.txt file.
- *   }
+ * @param array[] $list {
+ *     A list of sitemap endpoints keyed by ID.
+ *
+ *     @type string|false $lock_id  Optional. The cache key to use for locking. Defaults to index 'id'.
+ *                                  Set to false to disable locking.
+ *     @type string|false $cache_id Optional. The cache key to use for storing. Defaults to index 'id'.
+ *                                  Set to false to disable caching.
+ *     @type string       $endpoint The expected "pretty" endpoint, meant for administrative display.
+ *     @type string       $epregex  The endpoint regex, following the home path regex.
+ *     @type callable     $callback The callback for the sitemap output.
+ *     @type bool         $robots   Whether the endpoint should be mentioned in the robots.txt file.
  * }
  * @return array[]
  */
@@ -51,7 +52,7 @@ function _wpml_register_sitemap_languages( $list ) {
 		   empty( $sitepress )
 		|| ! Helper\Compatibility::can_i_use(
 			[
-				'methods' => [
+				'methods'   => [
 					[ $sitepress, 'get_default_language' ],
 					[ $sitepress, 'get_active_languages' ],
 					[ $sitepress, 'get_setting' ],
@@ -110,7 +111,6 @@ function _wpml_register_sitemap_languages( $list ) {
  * @since 3.1.0
  * @since 5.0.0 Removed clearing once-per-request restriction.
  * @global \wpdb $wpdb
- * @access private
  */
 function _wpml_flush_sitemap() {
 	global $wpdb;
@@ -136,7 +136,6 @@ function _wpml_flush_sitemap() {
  *
  * @hook the_seo_framework_sitemap_header 10
  * @since 4.1.4
- * @access private
  */
 function _wpml_sitemap_filter_display_translatables() {
 	// ez.
@@ -150,8 +149,7 @@ function _wpml_sitemap_filter_display_translatables() {
  * @hook the_seo_framework_sitemap_hpt_query_args 10
  * @hook the_seo_framework_sitemap_nhpt_query_args 10
  * @since 4.1.4
- * @access private
- * @global $sitepress \SitePress
+ * @global \SitePress $sitepress
  *
  * @param array $args The query arguments.
  * @return array The augmented query arguments.

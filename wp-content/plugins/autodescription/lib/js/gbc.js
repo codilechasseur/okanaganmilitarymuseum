@@ -11,7 +11,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -48,31 +48,9 @@ window.tsfGBC = function( $ ) {
 	 *
 	 * @since 3.2.0
 	 * @access private
-	 * @type {Map<title:string,link:string,content:string;excerpt:string;visibility:string>} postData
+	 * @type {Map<string,string>} postData
 	 */
 	const postData = new Map();
-
-	/**
-	 * Debounces a simple function without arguments.
-	 *
-	 * @since 5.0.3
-	 * @access private
-	 *
-	 * @function
-	 * @param {CallableFunction} func
-	 * @param {Int} timeout
-	 * @return {Function}
-	 */
-	function debounce( func, timeout = 0 ) {
-		let timeoutId = 0;
-		return () => {
-			clearTimeout( timeoutId );
-			return {
-				cb: setTimeout( func, timeout ),
-				cancel: () => clearTimeout( timeoutId ),
-			};
-		};
-	}
 
 	/**
 	 * Retrieves post attribute.
@@ -80,7 +58,6 @@ window.tsfGBC = function( $ ) {
 	 * @since 3.2.0
 	 * @access private
 	 *
-	 * @function
 	 * @param {String} attribute
 	 * @return {mixed|null}
 	 */
@@ -94,16 +71,20 @@ window.tsfGBC = function( $ ) {
 	 * @since 3.2.0
 	 * @since 3.2.2 Now sets post visibility.
 	 * @since 5.0.3 Renamed from `setData()`.
+	 * @since 5.1.0 Now also sets the 'slug', 'parent', 'date', and 'author'.
 	 * @access private
-	 *
-	 * @function
 	 */
 	function updateData() {
-		postData.set( 'title', getPostAttribute( 'title' ) )
-				.set( 'link', editor.getPermalink() )
-				.set( 'content', getPostAttribute( 'content' ) )
-				.set( 'excerpt', getPostAttribute( 'excerpt' ) )
-				.set( 'visibility', editor.getEditedPostVisibility() );
+		postData
+			.set( 'title', getPostAttribute( 'title' ) )
+			.set( 'link', editor.getPermalink() )
+			.set( 'slug', getPostAttribute( 'slug' ) )
+			.set( 'parent', getPostAttribute( 'parent' ) )
+			.set( 'date', getPostAttribute( 'date' ) )
+			.set( 'author', getPostAttribute( 'author' ) )
+			.set( 'content', getPostAttribute( 'content' ) )
+			.set( 'excerpt', getPostAttribute( 'excerpt' ) )
+			.set( 'visibility', editor.getEditedPostVisibility() );
 	}
 
 	/**
@@ -112,8 +93,6 @@ window.tsfGBC = function( $ ) {
 	 * @since 3.2.0
 	 * @since 3.2.2 Now dispatches visibility changes.
 	 * @access private
-	 *
-	 * @function
 	 */
 	function assessData() {
 
@@ -128,28 +107,10 @@ window.tsfGBC = function( $ ) {
 	}
 
 	/**
-	 * Dispatches an event of a data type, also sends data of set type.
-	 *
-	 * @since 3.2.0
-	 * @access public
-	 *
-	 * @function
-	 * @param {String} type
-	 */
-	const triggerUpdate = type => {
-		// Unfortunately, we rely on jQuery here. We can't move away from this, since the data sent is definitely used by other plugins.
-		// TODO send deprecation notice ($._data( document, 'events' ), should we?), and implement alternative via event.detail.
-		$( document ).trigger(
-			`tsf-updated-gutenberg-${type}`,
-			[ postData.get( type ) ?? null ]
-		);
-	}
-
-	/**
 	 * Maintains asynchronous save states.
 	 * @since 3.2.0
 	 * @access private
-	 * @type {boolean} saved
+	 * @type {Boolean} saved
 	 */
 	let saved = false;
 	/**
@@ -166,8 +127,6 @@ window.tsfGBC = function( $ ) {
 	 * @since 4.0.0 1. Now waits for 7 seconds for the saveDispatcher to resolve before canceling the process.
 	 *              2. Added `saveType` checking, to discern events with stale dirty content.
 	 * @access private
-	 *
-	 * @function
 	 */
 	function saveDispatcher() {
 		if ( ! saved ) {
@@ -194,20 +153,18 @@ window.tsfGBC = function( $ ) {
 		}
 	}
 
-	const revertSaveStateDebouncer = debounce( revertSaveState, 7000 );
+	const revertSaveStateDebouncer = tsfUtils.debounce( revertSaveState, 7000 ); // 7s: timeout for HTTP resolving
 	/**
 	 * Reverts save state.
 	 *
 	 * @since 4.0.0
 	 * @access private
-	 *
-	 * @function
 	 */
 	function revertSaveState() {
 		saved = false;
 	}
 
-	const dispatchSaveEventDebouncer = debounce( dispatchSavedEvent, 500 );
+	const dispatchSaveEventDebouncer = tsfUtils.debounce( dispatchSavedEvent, 500 );
 	/**
 	 * Maintains retry states.
 	 * @since 4.0.0
@@ -222,8 +179,6 @@ window.tsfGBC = function( $ ) {
 	 * @since 4.0.0 1. Added `saveType` checking.
 	 *              2. Now forwards the `saveType` parameter in `tsf-gutenberg-saved-document`.
 	 * @access private
-	 *
-	 * @function
 	 */
 	function dispatchSavedEvent() {
 		if ( editor.isPostSavingLocked() ) {
@@ -231,7 +186,7 @@ window.tsfGBC = function( $ ) {
 			if ( ++retryDispatch < 3 ) {
 				dispatchSaveEventDebouncer();
 			} else {
-				dispatchSaveEventDebouncer() && dispatchSaveEventDebouncer().cancel();
+				dispatchSaveEventDebouncer().cancel();
 				retryDispatch = 0;
 			}
 		} else {
@@ -254,8 +209,8 @@ window.tsfGBC = function( $ ) {
 			}
 
 			if ( triggerOnSaveEvent ) {
-				document.dispatchEvent( new CustomEvent( 'tsf-gutenberg-onsave' ) )
-					&& document.dispatchEvent( new CustomEvent( 'tsf-gutenberg-onsave-completed' ) );
+				document.dispatchEvent( new CustomEvent( 'tsf-gutenberg-onsave' ) );
+				document.dispatchEvent( new CustomEvent( 'tsf-gutenberg-onsave-completed' ) );
 			}
 
 			document.dispatchEvent(
@@ -275,9 +230,9 @@ window.tsfGBC = function( $ ) {
 	 *
 	 * @since 4.0.0
 	 * @access private
-	 * @type {Object<string, *>}
+	 * @type {Object<string,*>}
 	 */
-	let lastSidebarState = {
+	const lastSidebarState = {
 		opened: false,
 	};
 	/**
@@ -285,8 +240,6 @@ window.tsfGBC = function( $ ) {
 	 *
 	 * @since 3.2.0
 	 * @access private
-	 *
-	 * @function
 	 */
 	function sidebarDispatcher() {
 		if ( editPost.isEditorSidebarOpened() ) {
@@ -303,20 +256,56 @@ window.tsfGBC = function( $ ) {
 	}
 
 	/**
+	 * Dispatches an event of a data type, also sends data of set type.
+	 *
+	 * @since 3.2.0
+	 * @since 5.1.0 Added a non-jQuery event alternatives: `tsf-uppdated-block-editor` and `tsf-uppdated-block-editor-${type}`.
+	 * @access public
+	 *
+	 * @param {String} type
+	 */
+	function triggerUpdate( type ) {
+
+		const value = postData.get( type );
+
+		document.dispatchEvent( new CustomEvent(
+			`tsf-updated-block-editor`,
+			{ detail: { type, value, postData } },
+		) );
+
+		document.dispatchEvent( new CustomEvent(
+			`tsf-updated-block-editor-${type}`,
+			{ detail: { type, value } },
+		) );
+
+		$._data( document, 'events' )?.[ `tsf-updated-gutenberg-${type}` ]
+			&& tsf.deprecatedFunc(
+				'jQuery event "tsf-updated-gutenberg"',
+				'5.1.0',
+				`JS Event "tsf-updated-block-editor" or "tsf-updated-block-editor-${type}"`,
+			);
+
+		// Unfortunately, we still rely on jQuery here.
+		// We can't move away from this quickly, since the data sent is definitely used by other plugins (like our Focus extension was).
+		$( document ).trigger(
+			`tsf-updated-gutenberg-${type}`,
+			[ value ],
+		);
+	}
+
+	/**
 	 * Initializes Gutenberg's compatibility and dispatches event hooks.
 	 *
 	 * @since 3.2.0
 	 * @since 4.0.0 Now adds tooltip boundaries (moved from tt.js)
 	 * @access private
-	 *
-	 * @function
 	 */
-	const _initCompat = () => {
+	function _initCompat() {
 
 		const { subscribe } = wp.data;
 
-		subscribe( debounce( sidebarDispatcher, 500 ) );
-		subscribe( debounce( assessData, 300 ) );
+		subscribe( tsfUtils.debounce( sidebarDispatcher, 500 ) );
+		subscribe( tsfUtils.debounce( assessData, 300 ) );
 		subscribe( saveDispatcher );
 
 		document.dispatchEvent( new CustomEvent( 'tsf-subscribed-to-gutenberg' ) );

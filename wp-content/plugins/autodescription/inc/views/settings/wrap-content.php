@@ -6,13 +6,13 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -73,10 +73,20 @@ foreach ( $tabs as $tab => $args ) {
 		/**
 		 * @since 4.2.0
 		 * @since 5.0.0 Renamed 'params' to 'args'.
-		 * @param array $args The tab arguments: {
-		 *    @param string id
-		 *    @param string tab
-		 *    @param array  args
+		 * @param array $args {
+		 *     The tab creation data.
+		 *
+		 *     @type string $id   The nav-tab ID.
+		 *     @type string $tab  The tab name.
+		 *     @type array  $args {
+		 *         The tab creation arguments.
+		 *
+		 *         @type string   $name     Tab name.
+		 *         @type callable $callback Output function.
+		 *         @type string   $dashicon The dashicon to use.
+		 *         @type mixed    $args     Optional callback function args. These arguments
+		 *                                  will be extracted to variables in scope of the view.
+		 *    }
 		 * }
 		 */
 		\do_action(

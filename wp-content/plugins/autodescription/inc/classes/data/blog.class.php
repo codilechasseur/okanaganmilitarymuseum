@@ -8,19 +8,16 @@ namespace The_SEO_Framework\Data;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\{
+use function The_SEO_Framework\{
 	memo,
 	umemo,
 };
 
-use \The_SEO_Framework\{
-	Data, // Yes, it is legal to import the same namespace.
-	Traits\Property_Refresher,
-};
+use The_SEO_Framework\Data; // Yes, it is legal to import the same namespace.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -39,11 +36,11 @@ use \The_SEO_Framework\{
  * Holds a collection of data helper methods for the blog.
  *
  * @since 5.0.0
+ * @since 5.1.0 Removed the unused Property_Refresher trait.
  * @access protected
  *         Use tsf()->data()->blog() instead.
  */
 class Blog {
-	use Property_Refresher;
 
 	/**
 	 * Fetches public blogname (site title).
@@ -59,7 +56,7 @@ class Blog {
 		return umemo( __METHOD__ )
 			?? umemo(
 				__METHOD__,
-				Data\Plugin::get_option( 'site_title' ) ?: static::get_filtered_blog_name()
+				Data\Plugin::get_option( 'site_title' ) ?: self::get_filtered_blog_name(),
 			);
 	}
 
@@ -78,7 +75,7 @@ class Blog {
 		 */
 		return (string) \apply_filters(
 			'the_seo_framework_blog_name',
-			trim( \get_bloginfo( 'name', 'display' ) )
+			trim( \get_bloginfo( 'name', 'display' ) ),
 		);
 	}
 
@@ -136,7 +133,7 @@ class Blog {
 
 	/**
 	 * Whether the current blog is spam or deleted.
-	 * Multisite Only.
+	 * Multisite only.
 	 *
 	 * @since 5.0.0
 	 *
@@ -169,10 +166,10 @@ class Blog {
 			(bool) \strlen( ltrim(
 				parse_url(
 					\get_option( 'home' ),
-					\PHP_URL_PATH
+					\PHP_URL_PATH,
 				) ?? '',
 				' \\/',
-			) )
+			) ),
 		);
 	}
 
@@ -196,7 +193,7 @@ class Blog {
 			// whereas active_plugins stores them in the values. array_keys() resolves the disparity.
 			$active_plugins = array_merge(
 				$active_plugins,
-				array_keys( \get_site_option( 'active_sitewide_plugins', [] ) )
+				array_keys( \get_site_option( 'active_sitewide_plugins', [] ) ),
 			);
 
 			// $plugins is already sorted at `activate_plugin`.
@@ -204,5 +201,21 @@ class Blog {
 		}
 
 		return $active_plugins;
+	}
+
+	/**
+	 * Determines list of active themes.
+	 * Memoizes the return value.
+	 *
+	 * @since 5.1.3
+	 *
+	 * @return string[] List of active themes (stylesheet and template).
+	 */
+	public static function get_active_themes() {
+
+		return memo() ?? memo( array_unique( [
+			strtolower( \get_option( 'stylesheet' ) ), // Child theme.
+			strtolower( \get_option( 'template' ) ),   // Parent theme.
+		] ) );
 	}
 }

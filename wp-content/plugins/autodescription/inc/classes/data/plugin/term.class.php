@@ -8,16 +8,17 @@ namespace The_SEO_Framework\Data\Plugin;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\is_headless;
+use function The_SEO_Framework\is_headless;
 
-use \The_SEO_Framework\Helper\{
-	Query,
-	Taxonomy,
+use The_SEO_Framework\{
+	Helper\Query,
+	Helper\Taxonomy,
+	Traits\Property_Refresher,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -36,10 +37,14 @@ use \The_SEO_Framework\Helper\{
  * Holds a collection of Term data interface methods for TSF.
  *
  * @since 5.0.0
+ * @since 5.1.0 Added the Property_Refresher trait.
  * @access protected
- *         Use tsf()->data()->plugin->term() instead.
+ *         Use tsf()->data()->plugin()->term() instead.
+ *
+ * @NOTE: All static:: calls within this class are intentional due to Property_Refresher trait.
  */
 class Term {
+	use Property_Refresher;
 
 	/**
 	 * @since 5.0.0
@@ -87,6 +92,7 @@ class Term {
 	 * @since 5.0.0 1. Removed the second `$use_cache` parameter.
 	 *              2. Moved from `\The_SEO_Framework\Load`.
 	 *              3. Renamed from `get_term_meta`.
+	 * @since 5.1.0 Now returns the default meta if the term's taxonomy isn't supported.
 	 *
 	 * @param int $term_id The Term ID.
 	 * @return array The term meta data.
@@ -98,9 +104,12 @@ class Term {
 		if ( isset( static::$meta_memo[ $term_id ] ) )
 			return static::$meta_memo[ $term_id ];
 
+		// Code smell: the empty test is for performance since the memo can be bypassed by input vars.
+		empty( static::$meta_memo ) and static::register_automated_refresh( 'meta_memo' );
+
 		// We test taxonomy support to be consistent with `get_post_meta()`.
 		if ( empty( $term_id ) || ! Taxonomy::is_supported( \get_term( $term_id )->taxonomy ?? '' ) )
-			return static::$meta_memo[ $term_id ] = [];
+			return static::$meta_memo[ $term_id ] = static::get_default_meta( $term_id );
 
 		// Keep lucky first when exceeding nice numbers. This way, we won't overload memory in memoization.
 		if ( \count( static::$meta_memo ) > 69 )
@@ -117,7 +126,7 @@ class Term {
 		/**
 		 * @since 4.0.5
 		 * @since 4.1.4 1. Now considers headlessness.
-		 *              2. Now returns a 3rd parameter: boolean $headless.
+		 *              2. Now returns a 3rd parameter: Boolean $headless.
 		 * @note Do not delete/unset/add indexes! It'll cause errors.
 		 * @param array $meta        The current term meta.
 		 * @param int   $term_id     The term ID.

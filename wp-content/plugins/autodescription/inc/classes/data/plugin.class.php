@@ -8,13 +8,13 @@ namespace The_SEO_Framework\Data;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\is_headless;
+use function The_SEO_Framework\is_headless;
 
-use \The_SEO_Framework\Traits\Property_Refresher;
+use The_SEO_Framework\Traits\Property_Refresher;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -35,20 +35,22 @@ use \The_SEO_Framework\Traits\Property_Refresher;
  * @since 5.0.0
  * @access protected
  *         Use tsf()->data()->plugin() instead.
+ *
+ * @NOTE: All static:: calls within this class are intentional due to Property_Refresher trait.
  */
 class Plugin {
 	use Property_Refresher;
 
 	/**
 	 * @since 5.0.0
-	 * @var array Holds 'all' TSF's options/settings. Updates in real time.
+	 * @var ?array Holds 'all' TSF's options/settings.
 	 * @uses \THE_SEO_FRAMEWORK_SITE_OPTIONS
 	 */
 	private static $options_memo;
 
 	/**
 	 * @since 5.0.0
-	 * @var array Holds 'all' TSF's site cache. Updates in real time.
+	 * @var ?array Holds 'all' TSF's site cache.
 	 * @uses \THE_SEO_FRAMEWORK_SITE_CACHE
 	 */
 	private static $site_cache_memo;
@@ -58,12 +60,11 @@ class Plugin {
 	 *
 	 * @hook "update_option_ . \THE_SEO_FRAMEWORK_SITE_OPTIONS" 0
 	 * @since 5.0.0
-	 * @access private
 	 */
 	public static function flush_cache() {
-		static::$options_memo    = null;
-		static::$site_cache_memo = null;
-		Plugin\PTA::flush_cache();
+		static::refresh_static_properties();
+		// PTA is stored in the default plugin options.
+		Plugin\PTA::refresh_static_properties();
 	}
 
 	/**
@@ -84,7 +85,7 @@ class Plugin {
 	 */
 	public static function get_option( ...$key ) {
 
-		$option = static::$options_memo ?? static::get_options();
+		$option = self::$options_memo ?? self::get_options();
 
 		foreach ( $key as $k )
 			$option = $option[ $k ] ?? null;
@@ -101,23 +102,23 @@ class Plugin {
 	 */
 	public static function get_options() {
 
-		if ( isset( static::$options_memo ) )
-			return static::$options_memo;
+		if ( isset( self::$options_memo ) )
+			return self::$options_memo;
+
+		static::register_automated_refresh( 'options_memo' );
 
 		$is_headless = is_headless( 'settings' );
-
-		static::register_automated_refresh( 'options' );
 
 		/**
 		 * @since 2.0.0
 		 * @since 4.1.4 1. Now considers headlessness.
-		 *              2. Now returns a 3rd parameter: boolean $headless.
+		 *              2. Now returns a 3rd parameter: Boolean $headless.
 		 *
 		 * @param array  $settings The settings
 		 * @param string $setting  The settings name.
 		 * @param bool   $headless Whether the options are headless.
 		 */
-		return static::$options_memo = \apply_filters(
+		return self::$options_memo = \apply_filters(
 			'the_seo_framework_get_options',
 			$is_headless
 				? Plugin\Setup::get_default_options()
@@ -136,6 +137,8 @@ class Plugin {
 	 * @since 2.9.0
 	 * @since 5.0.0 Moved from `\The_SEO_Framework\Load`.
 	 * @since 5.0.2 Now falls back to default for merge: If the option disappears for some reason, we won't crash.
+	 * @since 5.1.0 No longer considers headlessness. The headless filters are ought
+	 *              to stay in place throughout the request, affecting `get_option()`.
 	 *
 	 * @param string|array $option The option key, or an array of key and value pairs.
 	 * @param mixed        $value  The option value. Ignored when $option is an array.
@@ -149,14 +152,12 @@ class Plugin {
 			\is_array( $option ) ? $option : [ $option => $value ],
 		);
 
-		// If the current request is headless, do not update the state.
-		// The next request may have filtered this value, or the update was blocked.
-		if ( ! is_headless( 'settings' ) )
-			static::$options_memo = null;
+		// Selectively reset one property.
+		static::$options_memo = null;
+		// But reset everything for PTA, because those rely entirely on the plugin options.
+		Plugin\PTA::refresh_static_properties();
 
-		Plugin\PTA::flush_cache();
-
-		return \update_option( \THE_SEO_FRAMEWORK_SITE_OPTIONS, $options );
+		return \update_option( \THE_SEO_FRAMEWORK_SITE_OPTIONS, $options, true );
 	}
 
 	/**
@@ -185,7 +186,7 @@ class Plugin {
 		if ( isset( static::$site_cache_memo ) )
 			return static::$site_cache_memo;
 
-		static::register_automated_refresh( 'site_cache' );
+		static::register_automated_refresh( 'site_cache_memo' );
 
 		return static::$site_cache_memo =
 			   \get_option( \THE_SEO_FRAMEWORK_SITE_CACHE )
@@ -211,9 +212,9 @@ class Plugin {
 			\is_array( $cache ) ? $cache : [ $cache => $value ],
 		);
 
-		static::$site_cache_memo = $site_cache;
+		static::$site_cache_memo = null;
 
-		return \update_option( \THE_SEO_FRAMEWORK_SITE_CACHE, $site_cache );
+		return \update_option( \THE_SEO_FRAMEWORK_SITE_CACHE, $site_cache, true );
 	}
 
 	/**
@@ -232,8 +233,8 @@ class Plugin {
 		foreach ( (array) $cache as $key )
 			unset( $site_cache[ $key ] );
 
-		static::$site_cache_memo = $site_cache;
+		static::$site_cache_memo = null;
 
-		return \update_option( \THE_SEO_FRAMEWORK_SITE_CACHE, $site_cache );
+		return \update_option( \THE_SEO_FRAMEWORK_SITE_CACHE, $site_cache, true );
 	}
 }

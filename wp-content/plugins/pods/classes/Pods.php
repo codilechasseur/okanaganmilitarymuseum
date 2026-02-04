@@ -1674,6 +1674,10 @@ class Pods implements Iterator {
 										$params->single = false;
 									}
 
+									if ( is_array( $value ) ) {
+										$value = array_unique( $value );
+									}
+
 									$value = PodsForm::field_method( 'pick', 'simple_value', $field, $value, $last_options, $all_fields[ $pod ], 0, true );
 								} elseif ( false === $params->in_form && ! empty( $value ) && is_array( $value ) && false === $params->keyed ) {
 									$value = array_values( $value );
@@ -4187,7 +4191,7 @@ class Pods implements Iterator {
 				];
 			}
 
-			$field = pods_config_merge_data( $defaults, $fields );
+			$field = pods_config_merge_data( $defaults, $field );
 
 			$field['name'] = trim( $field['name'] );
 
@@ -4246,6 +4250,17 @@ class Pods implements Iterator {
 		$pre = apply_filters( 'pods_pre_do_magic_tags', null, $code, $this );
 		if ( null !== $pre ) {
 			return $pre;
+		}
+
+		if ( ! is_string( $code ) ) {
+			_doing_it_wrong( __FUNCTION__, 'Pods::do_magic_tags() must be given a string, a non-string was provided.', '3.3.2' );
+			pods_debug_log( 'Pods::do_magic_tags() called with non-string: ' . var_export( $code, true ) );
+
+			return '';
+		}
+
+		if ( '' === trim( $code ) ) {
+			return '';
 		}
 
 		return preg_replace_callback( '/({@(.*?)})/m', array( $this, 'process_magic_tags' ), $code );

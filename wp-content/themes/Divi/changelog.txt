@@ -1,3 +1,217 @@
+version 4.27.5 ( updated 12-04-2025 )
+- Fixed Shop module not properly filtering products by custom taxonomy terms when "Use Current Page" was enabled.
+- Fixed RankMath's sitemap generation produced errors when Blurb modules used icons.
+- Changed elegant_themes_support elevated role to administrator.
+- Fixed an issue with WordPress 6.7 where the "Disable translations" no longer worked.
+- Fixed Divi 4 to Divi 5 gradient conversion for custom modules with individual gradient color fields.
+- Fixed "Notice: Function _load_textdomain_just_in_time was called incorrectly." error in WordPress 6.7+.
+- Fixed Divi Settings menu and icon are not displayed in edit post page.
+- Fixed issue where the page is immediately jump to the bottom when user click on Divi Layout block area.
+- Fixed Scroll Down icon displaying as broken characters in Fullwidth Header module after WordPress 6.9 update.
+- Fixed button icons displaying as broken characters across multiple modules after WordPress 6.9 update. Also fixes overlay icons in Image, Portfolio, Blog, Gallery, WooCommerce, Video, and Testimonial modules.
+
+version 4.27.4 ( updated 11-25-2024 )
+- Fixed issue where image with lazy loading enabled are distorted on WordPress 6.7.
+	* includes/builder/core.php
+
+version 4.27.3 ( updated 11-08-2024 )
+- Fixed broken "Use The Divi Builder" button in Block Editor header.
+- Upgraded jQuery Mobile from v1.4.5 to v1.5.0 alpha and removed unused code.
+- Fixes console errors in Divi Block Editor which has happening due to the WP API changes since 6.3 and 6.6.
+	* includes/block-editor-integration.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/feature/dynamic-assets/assets/js/jquery.mobile.js
+	* includes/builder/feature/feature/dynamic-assets/assets/js/jquery_mobile_custom.js
+
+version 4.27.2 ( updated 10-01-2024 )
+- Updated Magnific Popup library to v1.2.0.
+- Fixed a bug where image IDs were not replace correctly during import in some cases with the Gallery module.
+- Fixed incorrect payload sent when using Divi AI Image Editor particularly w/ the Enhance endpoint.
+- Fixed the issue where the image was not appearing on the AI Preview modal when using the Generate Content With AI option in the Blurb and Person Module.
+- Added link option group in heading module.
+- Fixed an issue where the color picker did not open automatically after selecting the "custom" color option in the dropdown menu.
+- Fixed the problem of the page getting refreshed to the previous state after clicking on Generate a new site.
+- Fixed the issue where cart, checkout, and my account pages were not being included in the WooCommerce package during website setup.
+- Fixed the issue where image credits were getting cut off in Divi AI Sections.
+- Fixed issue with updating section classes when AI Section is inserted.
+- Fixed an issue where AI defaults were not saved, were not used for current session.
+- Fixed redirection to Divi Dashboard page when Divi theme is updated.
+- Fixes compatibility issue with the Backend Builder in Safari 18 on macOS Sequoia.
+	* ai-app/build/et-ai-app.bundle.css
+	* ai-app/build/et-ai-app.bundle.js
+	* core/admin/js/support-center.js
+	* core/components/PageResource.php
+	* core/components/Portability.php
+	* core/components/SupportCenter.php
+	* core/components/Updates.php
+	* core/components/api/email/_MailPoet3.php
+	* core/components/cache/init.php
+	* core/components/data/init.php
+	* core/functions.php
+	* core/init.php
+	* includes/builder/autoload.php
+	* includes/builder/class-et-builder-module-shortcode-manager.php
+	* includes/builder/feature/dynamic-assets/assets/js/magnific-popup.js
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/functions.php
+	* includes/builder/module/Heading.php
+	* includes/builder/scripts/src/builder.js
+	* onboarding/ajax.php
+	* onboarding/functions.php
+	* onboarding/helpers.php
+	* onboarding/onboarding.php
+
+version 4.27.1 ( updated 08-12-2024 )
+- Fixed Elegant Themes product updates showing up in the WordPress admin for a short time after updating to the latest version.
+- Fixed global color issue for scroll down icon in fullwidth modules.
+- Fixed issue where Divi Builder fails to load when Woo Products Module is used and WooCommerce Plugin is deactivated.
+- Updated the subscriber retrieval method for MailPoet to use the provided public API.
+	* ai-app/build/et-ai-app.bundle.css
+	* ai-app/build/et-ai-app.bundle.js
+	* core/admin/js/portability.js
+	* core/components/Updates.php
+	* core/components/data/init.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/languages/ar.po
+	* includes/builder/languages/bg_BG.po
+	* includes/builder/languages/cs_CZ.po
+	* includes/builder/languages/da_DK.po
+	* includes/builder/languages/de_DE.po
+	* includes/builder/languages/el.po
+	* includes/builder/languages/en_US.po
+	* includes/builder/languages/es_ES.po
+	* includes/builder/languages/fi.po
+	* includes/builder/languages/fr_FR.po
+	* includes/builder/languages/he_IL.po
+	* includes/builder/languages/hu_HU.po
+	* includes/builder/languages/id_ID.po
+	* includes/builder/languages/it_IT.po
+	* includes/builder/languages/ja.po
+	* includes/builder/languages/ko_KR.po
+	* includes/builder/languages/ms_MY.po
+	* includes/builder/languages/nb_NO.po
+	* includes/builder/languages/nl_NL.po
+	* includes/builder/languages/pl_PL.po
+	* includes/builder/languages/pt_BR.po
+	* includes/builder/languages/ro_RO.po
+	* includes/builder/languages/ru_RU.po
+	* includes/builder/languages/sk_SK.po
+	* includes/builder/languages/sr_RS.po
+	* includes/builder/languages/sv_SE.po
+	* includes/builder/languages/th.po
+	* includes/builder/languages/tl.po
+	* includes/builder/languages/tr_TR.po
+	* includes/builder/languages/uk.po
+	* includes/builder/languages/vi.po
+	* includes/builder/languages/zh_CN.po
+	* lang/ar.po
+	* lang/bg_BG.po
+	* lang/cs_CZ.po
+	* lang/da_DK.po
+	* lang/de_DE.po
+	* lang/el.po
+	* lang/en_US.po
+	* lang/es_ES.po
+	* lang/fi.po
+	* lang/fr_FR.po
+	* lang/he_IL.po
+	* lang/hu_HU.po
+	* lang/id_ID.po
+	* lang/it_IT.po
+	* lang/ja.po
+	* lang/ko_KR.po
+	* lang/ms_MY.po
+	* lang/nb_NO.po
+	* lang/nl_NL.po
+	* lang/pl_PL.po
+	* lang/pt_BR.po
+	* lang/ro_RO.po
+	* lang/ru_RU.po
+	* lang/sk_SK.po
+	* lang/sr_RS.po
+	* lang/sv_SE.po
+	* lang/th.po
+	* lang/tl.po
+	* lang/tr_TR.po
+	* lang/uk.po
+	* lang/vi.po
+	* lang/zh_CN.po
+
+version 4.27 ( updated 07-17-2024 )
+- Introduced Divi AI Sections and Unsplash integration for all Divi AI generated content.
+- Fixed all links having underlines coming from new styles released in WordPress 6.6.
+- Fixed image use problem after generating and extending a large image.
+- Updated border radius limit in customizer button settings to allow up to 100px.
+- Fixed WordPress Choose an Image modal not appearing when editing images via Divi Settings modal.
+- Fixed a PHP error that occurred in some cases when the global presets history was split into separate database records.
+	* ai-app/ai-app.php
+	* ai-app/build/et-ai-app.bundle.css
+	* ai-app/build/et-ai-app.bundle.js
+	* ai-app/i18n/user-prompt.php
+	* ai-app/images/animated/ai/ai-progress-images.json
+	* ai-app/images/animated/ai/ai-progress-import.json
+	* ai-app/images/animated/ai/ai-progress-layout.json
+	* ai-app/images/animated/ai/ai-progress-menu.json
+	* ai-app/images/animated/ai/ai-progress-styles.json
+	* ai-app/images/animated/ai/ai-progress-text.json
+	* ai-app/images/card-1.svg
+	* ai-app/images/card-2.svg
+	* ai-app/images/card-3.svg
+	* core/admin/js/portability.js
+	* core/components/Portability.php
+	* functions.php
+	* includes/builder/autoload.php
+	* includes/builder/class-et-builder-element.php
+	* includes/builder/class-et-builder-module-shortcode-manager.php
+	* includes/builder/feature/global-presets/History.php
+	* includes/builder/framework.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/frontend-builder/theme-builder/api.php
+	* includes/builder/images/ai-layout-image-attributions-modal-close.svg
+	* includes/builder/module/helpers/WoocommerceModules.php
+	* onboarding/app/build/et-onboarding.bundle.js
+	* onboarding/app/build/et-onboarding.bundle.css
+	* onboarding/images/animated/ai/ai-progress-images.json
+	* onboarding/images/animated/ai/ai-progress-import.json
+	* onboarding/images/animated/ai/ai-progress-layout.json
+	* onboarding/images/animated/ai/ai-progress-menu.json
+	* onboarding/images/animated/ai/ai-progress-styles.json
+	* onboarding/images/animated/ai/ai-progress-text.json
+	* theme.json
+
+version 4.26.1 ( updated 07-12-2024 )
+- Updated blurb text for "Choose a Premade Layout" option to include information about cloning an existing page.
+- Fixed icon cutoff issue in Testimonial module when overflow is set to visible.
+- Fixed unable to edit any Theme Builder templates when using WordPress 6.6.
+- Fixed the issue where the success screen in Divi Onboarding was displaying pages that were not generated during onboarding.
+- Added role editor permission for Divi Quick sites.
+- Improved Presets storage system to allow saving more presets.
+- Improved License check system on Dashboard page.
+- Fixed issue with WooCommerce installation and activation failure handling in Divi onboarding process.
+- Fixed duplicated requests on dashboard page which may lead to "Something went wrong" error.
+- Optimized the query that retrieves the post count in Quick Sites overview which could have caused an internal server error on sites with many posts.
+- Reverted a previous bug fix that fixed a problem with 14px mobile and tablet body font sizes not working. However, due to how long this bug has existed, the fix changed mobile styles on too many existing websites and is being reverted for now.
+- Introduced new hook 'et_fb_should_apply_wpautop' to filter whether to apply wpautop to content of a shortcode.
+	* ai-app/build/et-ai-app.bundle.css
+	* ai-app/build/et-ai-app.bundle.js
+	* core/admin/js/portability.js
+	* core/components/Portability.php
+	* core/components/Updates.php
+	* functions.php
+	* includes/builder/core.php
+	* includes/builder/feature/global-presets/History.php
+	* includes/builder/frontend-builder/bundle.js
+	* includes/builder/frontend-builder/helpers.php
+	* includes/builder/frontend-builder/theme-builder/api.php
+	* includes/builder/functions.php
+	* onboarding/app/build/et-onboarding.bundle.js
+	* onboarding/app/build/et-onboarding.bundle.css
+	* onboarding/ajax.php
+	* onboarding/helpers.php
+	* onboarding/i18n/dashboard.php
+	* onboarding/onboarding.php
+
 version 4.26 ( updated 07-02-2024 )
 - Introduced Divi Quick Sites, including AI website creation and hand-crafted starter sites.
 	* ai-app/ai-app.php

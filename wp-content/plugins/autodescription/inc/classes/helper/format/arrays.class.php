@@ -8,11 +8,11 @@ namespace The_SEO_Framework\Helper\Format;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\memo;
+use function The_SEO_Framework\memo;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -56,14 +56,15 @@ class Arrays {
 
 		// PHP 8.1+, use `!array_is_list()`?
 		// This is over 350x faster than a polyfill for `!array_is_list()`.
-		if ( empty( $array ) || array_values( $array ) !== $array ) return $array;
+		if ( empty( $array ) || array_values( $array ) !== $array )
+			return $array;
 
 		$ret = [];
 
 		foreach ( $array as $value ) {
 			// We can later use `array_is_list()`.
 			if ( \is_array( $value ) && [] !== $value && array_values( $value ) === $value ) {
-				$ret = array_merge( $ret, static::flatten_list( $value ) );
+				$ret = array_merge( $ret, self::flatten_list( $value ) );
 			} else {
 				array_push( $ret, $value );
 			}
@@ -99,7 +100,7 @@ class Arrays {
 				if ( isset( $item[0] ) && 1 === \count( $item ) ) {
 					$item = reset( $item );
 				} else {
-					$item = static::scrub( $item );
+					$item = self::scrub( $item );
 				}
 			}
 		}
@@ -111,9 +112,9 @@ class Arrays {
 	 * Merges arrays distinctly, much like `array_merge()`, but then for multidimensionals.
 	 * Unlike PHP's `array_merge_recursive()`, this method doesn't convert non-unique keys as sequential.
 	 *
-	 * This is the only correct function of kind that exists, made bespoke by Sybre for TSF.
+	 * This is the only correct function of kind that exists, made by Sybre, bespoke for TSF.
 	 *
-	 * @link <https://3v4l.org/9pnW1#v8.1.8> Test it here.
+	 * @link <https://3v4l.org/9pnW1> Test it here.
 	 *
 	 * @since 4.1.4
 	 * @since 4.2.7 1. Now supports a single array entry without causing issues.
@@ -134,8 +135,57 @@ class Arrays {
 
 			foreach ( $arrays[ $i ] as $key => $value )
 				$arrays[ $p ][ $key ] = isset( $arrays[ $p ][ $key ] ) && \is_array( $value )
-					? static::array_merge_recursive_distinct( $arrays[ $p ][ $key ], $value )
+					? self::array_merge_recursive_distinct( $arrays[ $p ][ $key ], $value )
 					: $value;
+		}
+
+		return $arrays[0];
+	}
+
+	/**
+	 * Computes a difference between arrays, recursively. Much like `array_diff_assoc()`, but then for multidimensionals.
+	 *
+	 * Unlike `array_diff_assoc()`, this method considers out of order arrays as equal.
+	 * So, [ 1, 2 ] and [ 2, 1 ] are considered equal. This is helpful for associative array comparison, like with options.
+	 *
+	 * This is the only correct function of kind that exists, made bespoke by Sybre for TSF.
+	 *
+	 * @link <https://3v4l.org/CuItX> Test it here.
+	 * TODO consider array_reduce() for improved performance?
+	 *
+	 * @since 5.1.0
+	 *
+	 * @param array ...$arrays The arrays to differentiate. The leftmost array's values are dominant.
+	 * @return array The differentiated array values.
+	 */
+	public static function array_diff_assoc_recursive( ...$arrays ) {
+
+		$i = \count( $arrays );
+
+		while ( --$i ) {
+			$p = $i - 1;
+
+			if ( \is_array( $arrays[ $i ] ) && \is_array( $arrays[ $p ] ) ) {
+				foreach ( $arrays[ $i ] as $key => &$value ) {
+					if ( ! \array_key_exists( $key, $arrays[ $p ] ) ) {
+						// If the value doesn't exist in previous array, pass it along.
+						$arrays[ $p ][ $key ] = $value;
+						continue;
+					}
+
+					if (
+						   $value === $arrays[ $p ][ $key ]
+						|| ( \is_array( $value ) && ! self::array_diff_assoc_recursive( ...array_column( $arrays, $key ) ) )
+					) {
+						// If there's no diff with the previous array or no diff can be found recursively, remove it from all the next arrays.
+						foreach ( range( $p, $i ) as $_i )
+							if ( \is_array( $arrays[ $_i ] ) )
+								unset( $arrays[ $_i ][ $key ] );
+
+						continue;
+					}
+				}
+			}
 		}
 
 		return $arrays[0];

@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Admin\Notice;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Helper\Query,
 	Helper\Template,
@@ -16,7 +16,7 @@ use \The_SEO_Framework\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -53,21 +53,25 @@ class Persistent {
 	 *                           or it will be added for you--regardless of proper semantics.
 	 * @param string $key        The notice key. Must be unique--prevents double-registering of the notice, and allows for
 	 *                           deregistering of the notice.
-	 * @param array  $args       : {
-	 *    'type'   => string Optional. The notification type. Default 'updated'.
-	 *    'icon'   => bool   Optional. Whether to enable icon. Default true.
-	 *    'escape' => bool   Optional. Whether to escape the $message. Default true.
+	 * @param array  $args       {
+	 *     The notice creation arguments.
+	 *
+	 *     @type string $type   Optional. The notification type. Default 'updated'.
+	 *     @type bool   $icon   Optional. Whether to enable icon. Default true.
+	 *     @type bool   $escape Optional. Whether to escape the $message. Default true.
 	 * }
-	 * @param array  $conditions : {
-	 *     'capability'   => string Required. The user capability required for the notice to display. Defaults to settings capability.
-	 *     'screens'      => array  Optional. The screen bases the notice may be displayed on. When left empty, it'll output on any page.
-	 *     'excl_screens' => array  Optional. The screen bases the notice may NOT be displayed on. When left empty, only `screens` applies.
-	 *     'user'         => int    Optional. The user ID to display the notice for. Capability will not be ignored.
-	 *     'count'        => int    Optional. The number of times the persistent notice may appear (for everyone allowed to see it).
-	 *                              Set to -1 for unlimited. When -1, the notice must be removed from display manually.
-	 *     'timeout'      => int    Optional. The number of seconds the notice should remain valid for display. Set to -1 to disable check.
-	 *                              When the timeout is below -1, then the notification will not be outputted.
-	 *                              Do not input non-integer values (such as `false`), for those might cause adverse events.
+	 * @param array  $conditions {
+	 *     The notice output conditions.
+	 *
+	 *     @type string $capability   Required. The user capability required for the notice to display. Defaults to settings capability.
+	 *     @type array  $screens      Optional. The screen bases the notice may be displayed on. When left empty, it'll output on any page.
+	 *     @type array  $excl_screens Optional. The screen bases the notice may NOT be displayed on. When left empty, only `screens` applies.
+	 *     @type int    $user         Optional. The user ID to display the notice for. Capability will not be ignored.
+	 *     @type int    $count        Optional. The number of times the persistent notice may appear (for everyone allowed to see it).
+	 *                                Set to -1 for unlimited. When -1, the notice must be removed from display manually.
+	 *     @type int    $timeout      Optional. The number of seconds the notice should remain valid for display. Set to -1 to disable check.
+	 *                                When the timeout is below -1, then the notification will not be outputted.
+	 *                                Do not input non-integer values (such as `false`), for those might cause adverse events.
 	 * }
 	 */
 	public static function register_notice( $message, $key, $args = [], $conditions = [] ) {
@@ -130,7 +134,7 @@ class Persistent {
 		--$count;
 
 		if ( ! $count ) {
-			static::clear_notice( $key );
+			self::clear_notice( $key );
 		} else {
 
 			$notices = Data\Plugin::get_site_cache( 'persistent_notices' );
@@ -140,7 +144,7 @@ class Persistent {
 				Data\Plugin::update_site_cache( 'persistent_notices', $notices );
 			} else {
 				// Notice didn't conform. Remove it.
-				static::clear_notice( $key );
+				self::clear_notice( $key );
 			}
 		}
 	}
@@ -218,13 +222,13 @@ class Persistent {
 			) continue;
 
 			if ( -1 !== $cond['timeout'] && $cond['timeout'] < time() ) {
-				static::clear_notice( $key );
+				self::clear_notice( $key );
 				continue;
 			}
 
 			Template::output_view( 'notice/persistent', $notice['message'], $key, $notice['args'] );
 
-			static::count_down_notice( $key, $cond['count'] );
+			self::count_down_notice( $key, $cond['count'] );
 		}
 	}
 
@@ -237,7 +241,7 @@ class Persistent {
 	 */
 	public static function _dismiss_notice() {
 
-		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
 		$key = \sanitize_key( $_POST['tsf-notice-submit'] ?? '' );
 
 		if ( ! $key ) return;
@@ -250,11 +254,11 @@ class Persistent {
 		if (
 			   empty( $_POST['tsf_notice_nonce'] )
 			|| ! \current_user_can( $notices[ $key ]['conditions']['capability'] )
-			|| ! \wp_verify_nonce( $_POST['tsf_notice_nonce'], static::_get_dismiss_nonce_action( $key ) )
+			|| ! \wp_verify_nonce( $_POST['tsf_notice_nonce'], self::_get_dismiss_nonce_action( $key ) )
 		) {
 			\wp_die( -1, 403 );
 		}
 
-		static::clear_notice( $key );
+		self::clear_notice( $key );
 	}
 }

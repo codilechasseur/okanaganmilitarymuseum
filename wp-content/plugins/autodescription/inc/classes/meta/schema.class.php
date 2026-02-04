@@ -8,12 +8,12 @@ namespace The_SEO_Framework\Meta;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\{
+use function The_SEO_Framework\{
 	get_query_type_from_args,
 	normalize_generation_args,
 };
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Helper\Format\Arrays,
 	Helper\Query,
@@ -21,7 +21,7 @@ use \The_SEO_Framework\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -104,13 +104,31 @@ class Schema {
 		foreach ( $entity_builders as $builder )
 			$graph[] = \call_user_func( $builder, $args );
 
+		/**
+		 * For consistency, data should be filtered deep, such as (WordPress) title
+		 * filters for breadcrumb and page titles. Use this only if those aren't available.
+		 *
+		 * Use this only to adjust write dynamic references.
+		 * Use `the_seo_framework_schema_graph_data` for direct alteration instead.
+		 *
+		 * @since 5.1.0
+		 * @param array[]    $graph A sequential list of graph entities.
+		 * @param array|null $args  The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+		 *                          Is null when the query is autodetermined.
+		 */
+		$graph = \apply_filters(
+			'the_seo_framework_schema_queued_graph_data',
+			$graph,
+			$args,
+		);
+
 		// Fill the graph's references dynamically. Append extra graphs when given.
-		foreach ( static::$writer_queue as $writer )
+		foreach ( self::$writer_queue as $writer )
 			foreach ( \call_user_func( $writer ) as $extra_graph )
 				$graph[] = $extra_graph;
 
 		// Reset queue.
-		static::$writer_queue = [];
+		self::$writer_queue = [];
 
 		/**
 		 * For consistency, data should be filtered deep, such as (WordPress) title
@@ -136,7 +154,7 @@ class Schema {
 	}
 
 	/**
-	 * Returns the Schema.org graph.
+	 * Registers an entity writer for the current graph.
 	 *
 	 * @since 5.0.0
 	 *
@@ -144,6 +162,6 @@ class Schema {
 	 * @param callable $callback The callback to call to write graph.
 	 */
 	public static function register_entity_writer( $id, $callback ) {
-		static::$writer_queue[ $id ] = $callback;
+		self::$writer_queue[ $id ] = $callback;
 	}
 }

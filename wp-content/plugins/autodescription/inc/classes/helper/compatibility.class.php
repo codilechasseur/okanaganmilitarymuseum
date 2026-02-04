@@ -8,16 +8,16 @@ namespace The_SEO_Framework\Helper;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\memo;
+use function The_SEO_Framework\memo;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Admin,
 	Data,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -38,7 +38,7 @@ use \The_SEO_Framework\{
  * @since 5.0.0
  * @access private
  */
-class Compatibility {
+final class Compatibility {
 
 	/**
 	 * Registers plugin cache checks on plugin activation.
@@ -48,10 +48,11 @@ class Compatibility {
 	 */
 	public static function try_plugin_conflict_notification() {
 
-		if ( ! static::get_active_conflicting_plugin_types( true )['seo_tools'] ) return;
+		// We refresh here because the list is loaded before a plugin is (de)activated.
+		if ( ! self::get_active_conflicting_plugin_types( true )['seo_tools'] ) return;
 
 		Admin\Notice\Persistent::register_notice(
-			\__( 'Multiple SEO tools have been detected. You should only use one.', 'autodescription' ),
+			\__( 'Multiple SEO plugins have been detected. You should only use one.', 'autodescription' ),
 			'seo-plugin-conflict',
 			[ 'type' => 'warning' ],
 			[
@@ -84,7 +85,16 @@ class Compatibility {
 	 * @since 5.0.0 1. Moved from `The_SEO_Framework\Load`.
 	 *              2. Renamed from `conflicting_plugins`.
 	 *
-	 * @return array List of conflicting plugins.
+	 * @return array[] {
+	 *     The conflicting plugins types.
+	 *
+	 *     @type string[] $seo_tools    The conflicting SEO plugins base files, indexed by plugin name.
+	 *     @type string[] $sitemaps     The conflicting sitemap plugins base files, indexed by plugin name.
+	 *     @type string[] $open_graph   The conflicting Open Graph plugins base files, indexed by plugin name.
+	 *     @type string[] $twitter_card The conflicting Twitter Card plugins base files, indexed by plugin name.
+	 *     @type string[] $schema       The conflicting Schema plugins base files, indexed by plugin name.
+	 *     @type string[] $multilingual The conflicting multilingual plugins base files, indexed by plugin name.
+	 * }
 	 */
 	public static function get_conflicting_plugins() {
 
@@ -123,35 +133,18 @@ class Compatibility {
 		/**
 		 * @since 2.6.0
 		 * @since 5.0.0 Added indexes 'multilingual' and 'schema'.
-		 * @param array $conflicting_plugins The conflicting plugin list.
+		 * @param array[] $conflicting_plugins {
+		 *     The conflicting plugins types. You should not unset any keys.
+		 *
+		 *     @type string[] $seo_tools    The conflicting SEO plugins base files, indexed by plugin name.
+		 *     @type string[] $sitemaps     The conflicting sitemap plugins base files, indexed by plugin name.
+		 *     @type string[] $open_graph   The conflicting Open Graph plugins base files, indexed by plugin name.
+		 *     @type string[] $twitter_card The conflicting Twitter Card plugins base files, indexed by plugin name.
+		 *     @type string[] $schema       The conflicting Schema plugins base files, indexed by plugin name.
+		 *     @type string[] $multilingual The conflicting multilingual plugins base files, indexed by plugin name.
+		 * }
 		 */
-		$conflicting_plugins = (array) \apply_filters(
-			'the_seo_framework_conflicting_plugins',
-			$conflicting_plugins,
-		);
-
-		if ( \has_filter( 'the_seo_framework_conflicting_plugins_type' ) ) {
-			foreach ( $conflicting_plugins as $type => &$plugins ) {
-				/**
-				 * @since 2.6.1
-				 * @since 5.0.0 Deprecated. Use `the_seo_framework_conflicting_plugins` instead.
-				 * @deprecated
-				 * @param array  $conflicting_plugins Conflicting plugins
-				 * @param string $type                The type of plugins to get.
-				*/
-				$plugins = (array) \apply_filters_deprecated(
-					'the_seo_framework_conflicting_plugins_type',
-					[
-						$plugins,
-						$type,
-					],
-					'5.0.0 of The SEO Framework',
-					'the_seo_framework_conflicting_plugins',
-				);
-			}
-		}
-
-		return $conflicting_plugins;
+		return (array) \apply_filters( 'the_seo_framework_conflicting_plugins', $conflicting_plugins );
 	}
 
 	/**
@@ -160,13 +153,19 @@ class Compatibility {
 	 * @since 5.0.0
 	 *
 	 * @param bool $refresh Whether to refresh the cache.
-	 * @return array[] A list of types that are potentially conflicting : {
-	 *     string type => bool conflicting,
-	 * }
+	 * @return array {
+	 *     The active conflicting plugin types.
+	 *
+	 *     @type bool $seo_tools    Whether an SEO plugin is active.
+	 *     @type bool $sitemaps     Whether a sitemap plugin is active.
+	 *     @type bool $open_graph   Whether an Open Graph plugin is active.
+	 *     @type bool $twitter_card Whether a Twitter Card plugin is active.
+	 *     @type bool $schema       Whether a Schema plugin is active.
+	 *     @type bool $multilingual Whether a multilingual plugin is active.
 	 */
 	public static function get_active_conflicting_plugin_types( $refresh = false ) {
 
-		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- I know.
 		if ( ! $refresh && null !== $memo = memo() ) return $memo;
 
 		$conflicting_types = [
@@ -180,7 +179,7 @@ class Compatibility {
 
 		$active_plugins = Data\Blog::get_active_plugins();
 
-		foreach ( static::get_conflicting_plugins() as $type => $plugins )
+		foreach ( self::get_conflicting_plugins() as $type => $plugins )
 			if ( array_intersect( $plugins, $active_plugins ) )
 				$conflicting_types[ $type ] = true;
 
@@ -234,7 +233,7 @@ class Compatibility {
 
 		// Check for classes
 		foreach ( $plugins['classes'] ?? [] as $name )
-			if ( ! class_exists( $name, false ) ) // phpcs:ignore, TSF.Performance.Functions.PHP -- we don't autoload.
+			if ( ! class_exists( $name, false ) ) // phpcs:ignore TSF.Performance.Functions.PHP -- we don't autoload.
 				return false;
 
 		// Check for classes
@@ -253,19 +252,18 @@ class Compatibility {
 	 * @since 4.2.0 No longer "loads" the theme; instead, simply compares input to active theme options.
 	 * @since 5.0.0 1. Moved from `\The_SEO_Framework\Load`.
 	 *              2. Renamed from `is_theme`.
+	 * @since 5.1.0 Added memoization.
+	 * @since 5.1.3 Removed memoization; now uses `Data\Blog::get_active_themes()`.
 	 *
 	 * @param string|string[] $themes The theme names to test.
 	 * @return bool Any of the themes are active.
 	 */
 	public static function is_theme_active( $themes = '' ) {
 
-		$active_theme = [
-			strtolower( \get_option( 'stylesheet' ) ), // Parent.
-			strtolower( \get_option( 'template' ) ),   // Child.
-		];
+		$active_themes = Data\Blog::get_active_themes();
 
 		foreach ( (array) $themes as $theme )
-			if ( \in_array( strtolower( $theme ), $active_theme, true ) )
+			if ( \in_array( strtolower( $theme ), $active_themes, true ) )
 				return true;
 
 		return false;
@@ -277,10 +275,12 @@ class Compatibility {
 	 * Detects the following builders:
 	 * - Divi Builder by Elegant Themes
 	 * - Visual Composer by WPBakery
+	 * - Bricks Builder by Bricks
 	 *
 	 * @since 4.1.0
 	 * @since 5.0.0 1. Moved from `\The_SEO_Framework\Load`.
 	 *              2. Renamed from `detect_non_html_page_builder`.
+	 * @since 5.1.0 Added 'BRICKS_VERSION' (Bricks) constants.
 	 *
 	 * @return bool
 	 */
@@ -294,7 +294,11 @@ class Compatibility {
 			 */
 			(bool) \apply_filters(
 				'the_seo_framework_shortcode_based_page_builder_active',
-				\defined( 'ET_BUILDER_VERSION' ) || \defined( 'WPB_VC_VERSION' )
+				(
+					   \defined( 'ET_BUILDER_VERSION' )
+					|| \defined( 'WPB_VC_VERSION' )
+					|| \defined( 'BRICKS_VERSION' )
+				),
 			)
 		);
 	}

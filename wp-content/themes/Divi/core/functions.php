@@ -286,7 +286,7 @@ if ( ! function_exists( 'et_core_get_theme_info' ) ) :
 			}
 		}
 
-		return $theme_info->display( $key );
+		return $theme_info->get( $key );
 	}
 endif;
 
@@ -765,7 +765,10 @@ function et_core_setup( $deprecated = '' ) {
 	define( 'ET_CORE_TEXTDOMAIN', 'et-core' );
 	define( 'ET_CORE_TYPE', $type );
 
-	load_theme_textdomain( 'et-core', ET_CORE_PATH . 'languages/' );
+	add_action( 'init', function() {
+		load_theme_textdomain( 'et-core', ET_CORE_PATH . 'languages/' );
+	});
+
 	et_core_maybe_set_updated();
 	et_new_core_setup();
 
@@ -2122,6 +2125,10 @@ endif;
  * @return void
  */
 function et_code_snippets_admin_enqueue_scripts( $hook_suffix ) {
+	if ( ! function_exists( 'et_builder_bfb_enabled' ) ) {
+		return;
+	}
+
 	global $shortname;
 
 	// phpcs:disable WordPress.Security.NonceVerification -- This function does not change any state and is therefore not susceptible to CSRF.
@@ -2176,6 +2183,10 @@ add_action( 'wp_enqueue_scripts', 'et_code_snippets_vb_enqueue_scripts' );
  * @return void
  */
 function et_ai_admin_enqueue_scripts() {
+	if ( ! function_exists( 'et_builder_bfb_enabled' ) ) {
+		return;
+	}
+
 	if ( ! et_builder_bfb_enabled() ) {
 		return;
 	}

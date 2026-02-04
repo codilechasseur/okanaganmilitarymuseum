@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -30,15 +30,12 @@ namespace The_SEO_Framework;
  *
  * Holds various functions that relay to the new APIs.
  *
+ * @NOTE: All static:: calls within this class are intentional, to allow overrides in deprecators.
+ *
  * @since 5.0.0
  * You can access these methods via `tsf()` and `the_seo_framework()`.
  */
 class Legacy_API {
-
-	/**
-	 * Calling any top file without __construct() is forbidden.
-	 */
-	private function __construct() { }
 
 	/**
 	 * Return SEO options from the SEO options database.
@@ -218,11 +215,8 @@ class Legacy_API {
 	 *                 You should've used `create_canonical_url()` instead.
 	 * @api
 	 *
-	 * @param array|null $args The canonical URL arguments, leave null to autodetermine query : {
-	 *    int    $id       The Post, Page or Term ID to generate the URL for.
-	 *    string $taxonomy The taxonomy.
-	 *    string $pta      The pta.
-	 * }
+	 * @param array|null $args The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+	 *                         Leave null to autodetermine query.
 	 * @return string The canonical URL output.
 	 */
 	public static function get_canonical_url( $args = null ) {
@@ -243,14 +237,16 @@ class Legacy_API {
 	 *                            Leave null to autodetermine query.
 	 * @param bool       $single  Whether to fetch one image, or multiple.
 	 * @param string     $context The filter context. Default 'social'.
-	 * @return array[] The image details array, sequential: int => {
-	 *    string url:      The image URL,
-	 *    int    id:       The image ID,
-	 *    int    width:    The image width in pixels,
-	 *    int    height:   The image height in pixels,
-	 *    string alt:      The image alt tag,
-	 *    string caption:  The image caption,
-	 *    int    filesize: The image filesize in bytes,
+	 * @return array[] {
+	 *     The image details array, sequential.
+	 *
+	 *     @type string $url      The image URL.
+	 *     @type int    $id       The image ID.
+	 *     @type int    $width    The image width in pixels.
+	 *     @type int    $height   The image height in pixels.
+	 *     @type string $alt      The image alt tag.
+	 *     @type string $caption  The image caption.
+	 *     @type int    $filesize The image filesize in bytes.
 	 * }
 	 */
 	public static function get_image_details( $args = null, $single = true, $context = 'social' ) {

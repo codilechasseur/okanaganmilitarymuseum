@@ -12,6 +12,7 @@ wp-content/uploads/
 
 # Cache and temporary files
 wp-content/cache/
+wp-content/et-cache/
 wp-content/backup-db/
 wp-content/backups/
 wp-content/upgrade/

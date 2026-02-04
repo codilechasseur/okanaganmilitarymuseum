@@ -4673,7 +4673,7 @@ if ( ! function_exists( 'et_divi_customizer_theme_settings' ) ) :
 					'type'        => 'range',
 					'input_attrs' => array(
 						'min'  => 0,
-						'max'  => 50,
+						'max'  => 100,
 						'step' => 1,
 					),
 				)
@@ -6564,7 +6564,7 @@ function et_divi_add_customizer_css() {
 				.et_search_form_container input::-webkit-input-placeholder { color: <?php echo esc_html( $mobile_menu_link ); ?>; }
 				.et_search_form_container input:-ms-input-placeholder { color: <?php echo esc_html( $mobile_menu_link ); ?>; }
 			<?php } ?>
-			<?php if ( $body_font_size !== $tablet_body_font_size ) { ?>
+			<?php if ( 14 !== $tablet_body_font_size && $body_font_size !== $tablet_body_font_size ) { ?>
 				<?php echo esc_html( $body_selector_sibling ); ?>
 				<?php echo esc_html( $body_selector ); ?>,
 				<?php echo $css( '.et_pb_column_1_2 .et_quote_content blockquote cite', false ); ?>,
@@ -6657,7 +6657,7 @@ function et_divi_add_customizer_css() {
 			<?php } ?>
 		}
 		@media only screen and ( max-width: 767px ) {
-			<?php if ( $phone_body_font_size !== $tablet_body_font_size ) { ?>
+			<?php if ( 14 !== $phone_body_font_size && $phone_body_font_size !== $tablet_body_font_size ) { ?>
 				<?php echo esc_html( $body_selector_sibling ); ?>
 				<?php echo esc_html( $body_selector ); ?>,
 				<?php echo $css( '.et_pb_column_1_2 .et_quote_content blockquote cite', false ); ?>,
@@ -8610,19 +8610,25 @@ function et_divi_woocommerce_output_related_products_args( $args ) {
 add_filter( 'woocommerce_upsell_display_args', 'et_divi_woocommerce_output_related_products_args' );
 add_filter( 'woocommerce_output_related_products_args', 'et_divi_woocommerce_output_related_products_args' );
 
-function et_divi_maybe_change_frontend_locale( $locale ) {
+/**
+ * Disable translations if user enables the disable translations option.
+ *
+ * @return void
+ */
+function et_divi_maybe_disable_translations() {
 	$option_name   = 'divi_disable_translations';
 	$theme_options = get_option( 'et_divi' );
+	$domains       = array( 'Divi', 'et_builder', 'et_core', 'dashboard' );
 
-	$disable_translations = isset ( $theme_options[ $option_name ] ) ? $theme_options[ $option_name ] : false;
+	$disable_translations = isset( $theme_options[ $option_name ] ) ? $theme_options[ $option_name ] : false;
 
 	if ( 'on' === $disable_translations ) {
-		return 'en_US';
+		foreach ( $domains as $domain ) {
+			unload_textdomain( $domain );
+		}
 	}
-
-	return $locale;
 }
-add_filter( 'theme_locale', 'et_divi_maybe_change_frontend_locale' );
+add_action( 'init', 'et_divi_maybe_disable_translations' );
 
 /**
  * Enable Divi gallery override if user activates it

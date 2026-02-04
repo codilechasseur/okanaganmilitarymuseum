@@ -8,11 +8,11 @@ namespace The_SEO_Framework;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Admin\Script\AJAX;
+use The_SEO_Framework\Admin\Script\AJAX;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -35,11 +35,20 @@ use \The_SEO_Framework\Admin\Script\AJAX;
 // Admin AJAX for notice dismissal.
 \add_action( 'wp_ajax_tsf_dismiss_notice', [ AJAX::class, 'dismiss_notice' ] );
 
-// Admin AJAX for TSF Cropper
+// Admin AJAX for cropping images.
 \add_action( 'wp_ajax_tsf_crop_image', [ AJAX::class, 'crop_image' ] );
 
 // Admin AJAX for counter options.
 \add_action( 'wp_ajax_tsf_update_counter', [ AJAX::class, 'update_counter_type' ] );
 
-// Admin AJAX for Gutenberg SEO Bar update.
+// Admin AJAX for Gutenberg data update.
 \add_action( 'wp_ajax_tsf_update_post_data', [ AJAX::class, 'get_post_data' ] );
+
+// Admin AJAX for Term slug fetching.
+\add_action( 'wp_ajax_tsf_get_term_parent_slugs', [ AJAX::class, 'get_term_parent_slugs' ] );
+
+// Admin AJAX for Post slug fetching.
+\add_action( 'wp_ajax_tsf_get_post_parent_slugs', [ AJAX::class, 'get_post_parent_slugs' ] );
+
+// Admin AJAX for Author slug fetching.
+\add_action( 'wp_ajax_tsf_get_author_slug', [ AJAX::class, 'get_author_slug' ] );

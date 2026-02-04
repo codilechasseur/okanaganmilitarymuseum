@@ -10,7 +10,7 @@ namespace The_SEO_Framework\Helper;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -29,7 +29,8 @@ namespace The_SEO_Framework\Helper;
  * Holds a collection of helper methods for HTTP Headers.
  *
  * @since 5.0.0
- * @access private
+ * @access protected
+ *         Use tsf()->headers() instead.
  */
 class Headers {
 
@@ -60,7 +61,6 @@ class Headers {
 	 * @hook do_robots 10
 	 * @hook the_seo_framework_sitemap_header 10
 	 * @since 5.0.0
-	 * @access private
 	 */
 	public static function output_robots_noindex_headers() {
 		/**

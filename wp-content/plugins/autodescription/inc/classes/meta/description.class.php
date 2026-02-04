@@ -8,18 +8,19 @@ namespace The_SEO_Framework\Meta;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\{
+use function The_SEO_Framework\{
 	coalesce_strlen,
+	get_query_type_from_args,
 	memo,
 	normalize_generation_args,
 };
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Data\Filter\Sanitize,
 	Meta,
 };
-use \The_SEO_Framework\Helper\{
+use The_SEO_Framework\Helper\{
 	Guidelines,
 	Query,
 	Format\Strings,
@@ -27,7 +28,7 @@ use \The_SEO_Framework\Helper\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -61,8 +62,8 @@ class Description {
 	 * @return string The real description output.
 	 */
 	public static function get_description( $args = null ) {
-		return coalesce_strlen( static::get_custom_description( $args ) )
-			?? static::get_generated_description( $args );
+		return coalesce_strlen( self::get_custom_description( $args ) )
+			?? self::get_generated_description( $args );
 	}
 
 	/**
@@ -78,9 +79,9 @@ class Description {
 
 		if ( isset( $args ) ) {
 			normalize_generation_args( $args );
-			$desc = static::get_custom_description_from_args( $args );
+			$desc = self::get_custom_description_from_args( $args );
 		} else {
-			$desc = static::get_custom_description_from_query();
+			$desc = self::get_custom_description_from_query();
 		}
 
 		/**
@@ -121,7 +122,7 @@ class Description {
 	 */
 	public static function get_generated_description( $args = null, $type = 'search' ) {
 
-		if ( ! static::may_generate( $args ) ) return '';
+		if ( ! self::may_generate( $args ) ) return '';
 
 		switch ( $type ) {
 			case 'opengraph':
@@ -134,32 +135,10 @@ class Description {
 
 		isset( $args ) and normalize_generation_args( $args );
 
-		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- I know.
 		if ( null !== $memo = memo( null, $args, $type ) ) return $memo;
 
-		/**
-		 * @since 2.9.0
-		 * @since 3.1.0 No longer passes 3rd and 4th parameter.
-		 * @since 4.0.0 1. Deprecated second parameter.
-		 *              2. Added third parameter: $args.
-		 * @since 4.2.0 Now supports the `$args['pta']` index.
-		 * @since 5.0.0 Deprecated.
-		 * @deprecated
-		 * @param string     $excerpt The excerpt to use.
-		 * @param int        $page_id Deprecated.
-		 * @param array|null $args The query arguments. Contains 'id', 'tax', 'pta', and 'uid'.
-		 *                         Is null when the query is auto-determined.
-		 */
-		$excerpt = (string) \apply_filters_deprecated(
-			'the_seo_framework_fetched_description_excerpt',
-			[
-				Description\Excerpt::get_post_excerpt( $args ),
-				0,
-				$args,
-			],
-			'5.0.0 of The SEO Framework',
-			'the_seo_framework_description_excerpt',
-		);
+		$excerpt = Description\Excerpt::get_excerpt( $args );
 
 		/**
 		 * @since 5.0.0
@@ -212,7 +191,7 @@ class Description {
 	 * Gets a custom description, based on expected or current query, without escaping.
 	 *
 	 * @since 5.0.0
-	 * @see static::get_custom_description()
+	 * @see self::get_custom_description()
 	 *
 	 * @return string The custom description.
 	 */
@@ -255,19 +234,23 @@ class Description {
 
 		normalize_generation_args( $args );
 
-		if ( $args['tax'] ) {
-			$desc = Data\Plugin\Term::get_meta_item( 'description', $args['id'] );
-		} elseif ( $args['pta'] ) {
-			$desc = Data\Plugin\PTA::get_meta_item( 'description', $args['pta'] );
-		} elseif ( empty( $args['uid'] ) && Query::is_real_front_page_by_id( $args['id'] ) ) {
-			if ( $args['id'] ) {
-				$desc = coalesce_strlen( Data\Plugin::get_option( 'homepage_description' ) )
-					 ?? Data\Plugin\Post::get_meta_item( '_genesis_description', $args['id'] );
-			} else {
+		switch ( get_query_type_from_args( $args ) ) {
+			case 'single':
+				if ( Query::is_static_front_page( $args['id'] ) ) {
+					$desc = coalesce_strlen( Data\Plugin::get_option( 'homepage_description' ) )
+						 ?? Data\Plugin\Post::get_meta_item( '_genesis_description', $args['id'] );
+				} else {
+					$desc = Data\Plugin\Post::get_meta_item( '_genesis_description', $args['id'] );
+				}
+				break;
+			case 'term':
+				$desc = Data\Plugin\Term::get_meta_item( 'description', $args['id'] );
+				break;
+			case 'homeblog':
 				$desc = Data\Plugin::get_option( 'homepage_description' );
-			}
-		} elseif ( $args['id'] ) {
-			$desc = Data\Plugin\Post::get_meta_item( '_genesis_description', $args['id'] );
+				break;
+			case 'pta':
+				$desc = Data\Plugin\PTA::get_meta_item( 'description', $args['pta'] );
 		}
 
 		if ( isset( $desc ) && \strlen( $desc ) )

@@ -7,7 +7,7 @@ namespace The_SEO_Framework\Admin\Lists;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Helper\{
+use The_SEO_Framework\Helper\{
 	Post_Type,
 	Query,
 	Taxonomy,
@@ -15,7 +15,7 @@ use \The_SEO_Framework\Helper\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -126,6 +126,7 @@ abstract class Table {
 	 * @hook wp_ajax_inline-save -1
 	 * @since 4.0.0
 	 * @since 5.0.0 Renamed from `_prepare_columns_wp_ajax_inline_save`.
+	 * @since 5.1.0 Simplified capability check, akin to how `wp_ajax_inline_save()` does things.
 	 * @access private
 	 */
 	public function prepare_columns_wp_ajax_inline_save() {
@@ -134,14 +135,13 @@ abstract class Table {
 			   ! \check_ajax_referer( 'inlineeditnonce', '_inline_edit', false )
 			|| empty( $_POST['post_ID'] )
 			|| empty( $_POST['post_type'] )
+			|| ! \current_user_can(
+				'page' === $_POST['post_type'] ? 'edit_page' : 'edit_post',
+				(int) $_POST['post_ID'],
+			)
 		) return;
 
-		$post_type = stripslashes( $_POST['post_type'] );
-		$pto       = $post_type ? \get_post_type_object( $post_type ) : false;
-
-		// TODO shouldn't we just use `edit_post`? See output_column_contents_for_post && get_post_type_capabilities
-		if ( $pto && \current_user_can( "edit_{$pto->capability_type}", (int) $_POST['post_ID'] ) )
-			$this->init_columns_ajax();
+		$this->init_columns_ajax();
 	}
 
 	/**
@@ -157,10 +157,10 @@ abstract class Table {
 		if (
 			   ! \check_ajax_referer( 'taxinlineeditnonce', '_inline_edit', false )
 			|| empty( $_POST['tax_ID'] )
+			|| ! \current_user_can( 'edit_term', (int) $_POST['tax_ID'] )
 		) return;
 
-		if ( \current_user_can( 'edit_term', (int) $_POST['tax_ID'] ) )
-			$this->init_columns_ajax();
+		$this->init_columns_ajax();
 	}
 
 	/**
@@ -194,7 +194,7 @@ abstract class Table {
 		if ( $taxonomy )
 			\add_filter( "manage_{$taxonomy}_custom_column", [ $this, 'output_column_contents_for_term' ], 1, 3 );
 
-		\add_filter( "manage_{$screen->id}_columns", [ $this, 'add_column' ], 10, 1 );
+		\add_filter( "manage_{$screen->id}_columns", [ $this, 'add_column' ] );
 		/**
 		 * Always load pages and posts.
 		 * Many CPT plugins rely on these.
@@ -207,13 +207,14 @@ abstract class Table {
 	 * Initializes columns for AJAX.
 	 *
 	 * @since 4.0.0
+	 * @since 5.1.0 Changed the `manage_edit-{$taxonomy}_columns` filter priority from 1 to 10.
 	 * @see callers for CSRF protection.
 	 *    `_prepare_columns_wp_ajax_add_tag()`
 	 *    `_prepare_columns_wp_ajax_inline_save()`
 	 *    `_prepare_columns_wp_ajax_inline_save_tax()`
 	 */
 	private function init_columns_ajax() {
-		// phpcs:disable, WordPress.Security.NonceVerification -- _prepare_columns_wp_ajax_* verifies this.
+		// phpcs:disable WordPress.Security.NonceVerification -- _prepare_columns_wp_ajax_* verifies this.
 
 		$taxonomy  = isset( $_POST['taxonomy'] ) ? stripslashes( $_POST['taxonomy'] ) : '';
 		$post_type = isset( $_POST['post_type'] ) ? stripslashes( $_POST['post_type'] ) : '';
@@ -242,7 +243,7 @@ abstract class Table {
 
 		if ( $screen_id ) {
 			// Everything but inline-save-tax action.
-			\add_filter( "manage_{$screen_id}_columns", [ $this, 'add_column' ], 10, 1 );
+			\add_filter( "manage_{$screen_id}_columns", [ $this, 'add_column' ] );
 
 			/**
 			 * Always load pages and posts.
@@ -257,9 +258,9 @@ abstract class Table {
 			 * @see WP Core wp_ajax_inline_save_tax():
 			 *    `_get_list_table( 'WP_Terms_List_Table', array( 'screen' => "edit-$taxonomy" ) );`
 			 */
-			\add_filter( "manage_edit-{$taxonomy}_columns", [ $this, 'add_column' ], 1, 1 );
+			\add_filter( "manage_edit-{$taxonomy}_columns", [ $this, 'add_column' ] );
 		}
-		// phpcs:enable, WordPress.Security.NonceVerification
+		// phpcs:enable WordPress.Security.NonceVerification
 	}
 
 	/**

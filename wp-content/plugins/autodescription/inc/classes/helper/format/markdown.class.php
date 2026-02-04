@@ -10,7 +10,7 @@ namespace The_SEO_Framework\Helper\Format;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -52,7 +52,7 @@ class Markdown {
 	 * @param string $text    The text that might contain markdown. Expected to be escaped.
 	 * @param array  $convert The markdown style types wished to be converted.
 	 *                        If left empty, it will convert all.
-	 * @param array  $args    The function arguments. Accepts boolean 'a_internal'.
+	 * @param array  $args    The function arguments. Accepts Boolean 'a_internal'.
 	 * @return string The markdown converted text.
 	 */
 	public static function convert( $text, $convert = [], $args = [] ) {
@@ -66,9 +66,6 @@ class Markdown {
 
 		$args += [ 'a_internal' => false ];
 
-		/**
-		 * The conversion list's keys are per reference only.
-		 */
 		$conversions = [
 			'**'     => 'strong',
 			'*'      => 'em',
@@ -85,20 +82,20 @@ class Markdown {
 		$md_types = empty( $convert ) ? $conversions : array_intersect( $conversions, $convert );
 
 		if ( isset( $md_types['*'], $md_types['**'] ) )
-			$text = static::strong_em( $text );
+			$text = self::strong_em( $text );
 
 		foreach ( $md_types as $type ) {
 			switch ( $type ) {
 				case 'strong':
-					$text = static::strong( $text );
+					$text = self::strong( $text );
 					break;
 
 				case 'em':
-					$text = static::em( $text );
+					$text = self::em( $text );
 					break;
 
 				case 'code':
-					$text = static::code( $text );
+					$text = self::code( $text );
 					break;
 
 				case 'h6':
@@ -107,11 +104,11 @@ class Markdown {
 				case 'h3':
 				case 'h2':
 				case 'h1':
-					$text = static::h123456( $text, $type );
+					$text = self::h123456( $text, $type );
 					break;
 
 				case 'a':
-					$text = static::a( $text, $args['a_internal'] );
+					$text = self::a( $text, $args['a_internal'] );
 			}
 		}
 
@@ -132,12 +129,12 @@ class Markdown {
 	private static function strong_em( $text ) {
 
 		// Discrepancy with strong OR em: we exclude * here, we only want to capture full blocks.
-		$count = preg_match_all( '/\*{3}([^\*]+)\*{3}/', $text, $matches, \PREG_PATTERN_ORDER );
+		preg_match_all( '/\*{3}([^\*]+)\*{3}/', $text, $matches, \PREG_SET_ORDER );
 
-		for ( $i = 0; $i < $count; $i++ ) {
+		foreach ( $matches as $match ) {
 			$text = str_replace(
-				$matches[0][ $i ],
-				sprintf( '<strong><em>%s</em></strong>', \esc_html( $matches[1][ $i ] ) ),
+				$match[0],
+				\sprintf( '<strong><em>%s</em></strong>', \esc_html( $match[1] ) ),
 				$text,
 			);
 		}
@@ -157,12 +154,12 @@ class Markdown {
 	 */
 	private static function strong( $text ) {
 
-		$count = preg_match_all( '/\*{2}(.+?)\*{2}/', $text, $matches, \PREG_PATTERN_ORDER );
+		preg_match_all( '/\*{2}(.+?)\*{2}/', $text, $matches, \PREG_SET_ORDER );
 
-		for ( $i = 0; $i < $count; $i++ ) {
+		foreach ( $matches as $match ) {
 			$text = str_replace(
-				$matches[0][ $i ],
-				sprintf( '<strong>%s</strong>', \esc_html( $matches[1][ $i ] ) ),
+				$match[0],
+				\sprintf( '<strong>%s</strong>', \esc_html( $match[1] ) ),
 				$text,
 			);
 		}
@@ -182,12 +179,12 @@ class Markdown {
 	 */
 	private static function em( $text ) {
 
-		$count = preg_match_all( '/\*([^\*]+)\*/', $text, $matches, \PREG_PATTERN_ORDER );
+		preg_match_all( '/\*([^\*]+)\*/', $text, $matches, \PREG_SET_ORDER );
 
-		for ( $i = 0; $i < $count; $i++ ) {
+		foreach ( $matches as $match ) {
 			$text = str_replace(
-				$matches[0][ $i ],
-				sprintf( '<em>%s</em>', \esc_html( $matches[1][ $i ] ) ),
+				$match[0],
+				\sprintf( '<em>%s</em>', \esc_html( $match[1] ) ),
 				$text,
 			);
 		}
@@ -207,15 +204,16 @@ class Markdown {
 	 */
 	private static function code( $text ) {
 
-		$count = preg_match_all( '/`([^`]+)`/', $text, $matches, \PREG_PATTERN_ORDER );
+		preg_match_all( '/`([^`]+)`/', $text, $matches, \PREG_SET_ORDER );
 
-		for ( $i = 0; $i < $count; $i++ ) {
+		foreach ( $matches as $match ) {
 			$text = str_replace(
-				$matches[0][ $i ],
-				sprintf( '<code>%s</code>', \esc_html( $matches[1][ $i ] ) ),
+				$match[0],
+				\sprintf( '<code>%s</code>', \esc_html( $match[1] ) ),
 				$text,
 			);
 		}
+
 		return $text;
 	}
 
@@ -231,18 +229,23 @@ class Markdown {
 	 */
 	private static function h123456( $text, $type = 'h1' ) {
 
-		// Considers word non-boundary. @TODO consider removing that?
-		$expression = sprintf(
-			'/\={%1$d}\s(.+)\s\={%1$d}/',
-			filter_var( $type, \FILTER_SANITIZE_NUMBER_INT )
+		preg_match_all(
+			// Considers word non-boundary. @TODO consider removing that consideration?
+			\sprintf(
+				'/\={%1$d}\s(.+)\s\={%1$d}/',
+				filter_var( $type, \FILTER_SANITIZE_NUMBER_INT ),
+			),
+			$text,
+			$matches,
+			\PREG_SET_ORDER,
 		);
 
-		$count = preg_match_all( $expression, $text, $matches, \PREG_PATTERN_ORDER );
+		$type = \esc_attr( $type );
 
-		for ( $i = 0; $i < $count; $i++ ) {
+		foreach ( $matches as $match ) {
 			$text = str_replace(
-				$matches[0][ $i ],
-				sprintf( '<%1$s>%2$s</%1$s>', \esc_attr( $type ), \esc_html( $matches[1][ $i ] ) ),
+				$match[0],
+				\sprintf( '<%1$s>%2$s</%1$s>', $type, \esc_html( $match[1] ) ),
 				$text,
 			);
 		}
@@ -257,6 +260,7 @@ class Markdown {
 	 * @since 4.2.8 1. No longer blocks text with either { or } from being parsed.
 	 *              2. No longer blocks URLs with either ( or ) from being parsed.
 	 * @since 5.0.0 Moved from `\The_SEO_Framework\Interpreters\Markdown`.
+	 * @since 5.1.3 Now allows parentheses in URLs before the final closing parenthesis. They must be balanced, though.
 	 *
 	 * @param string $text     The input text.
 	 * @param bool   $internal Whether the link is internal (_self) or external (_blank).
@@ -265,15 +269,15 @@ class Markdown {
 	 */
 	private static function a( $text, $internal = true ) {
 
-		$count = preg_match_all( '/\[([^[\]]+)]\(([^\s]+)\s*\)/', $text, $matches, \PREG_PATTERN_ORDER );
+		preg_match_all( '/\[([^[\]]+)]\(((?:[^()\s]|\((?2)\))*)\)/', $text, $matches, \PREG_SET_ORDER );
 
 		// Keep this XHTML compatible!
-		$_string = $internal ? '<a href="%s">%s</a>' : '<a href="%s" target="_blank" rel="nofollow noreferrer noopener">%s</a>';
+		$format = $internal ? '<a href="%s">%s</a>' : '<a href="%s" target="_blank" rel="nofollow noreferrer noopener">%s</a>';
 
-		for ( $i = 0; $i < $count; $i++ ) {
+		foreach ( $matches as $match ) {
 			$text = str_replace(
-				$matches[0][ $i ],
-				sprintf( $_string, \esc_url( $matches[2][ $i ], [ 'https', 'http' ] ), \esc_html( $matches[1][ $i ] ) ),
+				$match[0],
+				\sprintf( $format, \esc_url( $match[2], [ 'https', 'http' ] ), \esc_html( $match[1] ) ),
 				$text,
 			);
 		}

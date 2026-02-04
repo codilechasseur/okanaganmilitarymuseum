@@ -6,20 +6,20 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-use \The_SEO_Framework\Admin\Settings\Layout\{
+use The_SEO_Framework\Admin\Settings\Layout\{
 	Form,
 	HTML,
 	Input,
 };
-use \The_SEO_Framework\Data\Filter\Sanitize;
+use The_SEO_Framework\Data\Filter\Sanitize;
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2017 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2017 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -53,8 +53,8 @@ $tw_suported_cards = Meta\Twitter::get_supported_cards();
 
 $image_placeholder = Meta\Image::get_first_generated_image_url( $generator_args, 'social' );
 
-$canonical_placeholder = Meta\URI::get_generated_url( $generator_args );
-$robots_defaults       = Meta\Robots::get_generated_meta(
+$default_canonical = Meta\URI::get_generated_url( $generator_args );
+$robots_defaults   = Meta\Robots::get_generated_meta(
 	$generator_args,
 	[ 'noindex', 'nofollow', 'noarchive' ],
 	ROBOTS_IGNORE_SETTINGS,
@@ -118,7 +118,7 @@ $_default_i18n = \__( 'Default (%s)', 'autodescription' );
 				<th scope=row valign=top><?php \esc_html_e( 'Doing it Right', 'autodescription' ); ?></th>
 				<td>
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput -- generate_bar() escapes.
+					// phpcs:ignore WordPress.Security.EscapeOutput -- generate_bar() escapes.
 					echo Admin\SEOBar\Builder::generate_bar( $generator_args );
 					?>
 				</td>
@@ -148,7 +148,7 @@ $_default_i18n = \__( 'Default (%s)', 'autodescription' );
 			</th>
 			<td>
 				<div class=tsf-title-wrap>
-					<input type=text name="autodescription-meta[doctitle]" id="autodescription-meta[doctitle]" value="<?= \esc_html( Sanitize::metadata_content( $meta['doctitle'] ) ) ?>" size=40 autocomplete=off data-form-type=other />
+					<input type=text name="autodescription-meta[doctitle]" id="autodescription-meta[doctitle]" value="<?= \esc_html( Sanitize::metadata_content( $meta['doctitle'] ) ) ?>" size=40 autocomplete=off data-form-type=other>
 					<?php
 					Input::output_js_title_data(
 						'autodescription-meta[doctitle]',
@@ -166,7 +166,7 @@ $_default_i18n = \__( 'Default (%s)', 'autodescription' );
 					?>
 				</div>
 				<label for="autodescription-meta[title_no_blog_name]" class=tsf-term-checkbox-wrap>
-					<input type=checkbox name="autodescription-meta[title_no_blog_name]" id="autodescription-meta[title_no_blog_name]" value=1 <?php \checked( Data\Plugin\Term::get_meta_item( 'title_no_blog_name' ) ); ?> />
+					<input type=checkbox name="autodescription-meta[title_no_blog_name]" id="autodescription-meta[title_no_blog_name]" value=1 <?php \checked( Data\Plugin\Term::get_meta_item( 'title_no_blog_name' ) ); ?>>
 					<?php
 					\esc_html_e( 'Remove the site title?', 'autodescription' );
 					echo ' ';
@@ -203,7 +203,7 @@ $_default_i18n = \__( 'Default (%s)', 'autodescription' );
 					[
 						'state' => [
 							'defaultDescription' => \esc_html(
-								Meta\Description::get_generated_description( $generator_args )
+								Meta\Description::get_generated_description( $generator_args ),
 							),
 						],
 					],
@@ -252,7 +252,7 @@ Input::output_js_social_data(
 			</th>
 			<td>
 				<div id=tsf-og-title-wrap>
-					<input name="autodescription-meta[og_title]" id="autodescription-meta[og_title]" type=text value="<?= \esc_html( Sanitize::metadata_content( $meta['og_title'] ) ) ?>" size=40 autocomplete=off data-form-type=other data-tsf-social-group=autodescription_social_tt data-tsf-social-type=ogTitle />
+					<input name="autodescription-meta[og_title]" id="autodescription-meta[og_title]" type=text value="<?= \esc_html( Sanitize::metadata_content( $meta['og_title'] ) ) ?>" size=40 autocomplete=off data-form-type=other data-tsf-social-group=autodescription_social_tt data-tsf-social-type=ogTitle>
 				</div>
 			</td>
 		</tr>
@@ -284,7 +284,7 @@ Input::output_js_social_data(
 			</th>
 			<td>
 				<div id=tsf-tw-title-wrap>
-					<input name="autodescription-meta[tw_title]" id="autodescription-meta[tw_title]" type=text value="<?= \esc_html( Sanitize::metadata_content( $meta['tw_title'] ) ) ?>" size=40 autocomplete=off data-form-type=other data-tsf-social-group=autodescription_social_tt data-tsf-social-type=twTitle />
+					<input name="autodescription-meta[tw_title]" id="autodescription-meta[tw_title]" type=text value="<?= \esc_html( Sanitize::metadata_content( $meta['tw_title'] ) ) ?>" size=40 autocomplete=off data-form-type=other data-tsf-social-group=autodescription_social_tt data-tsf-social-type=twTitle>
 				</div>
 			</td>
 		</tr>
@@ -319,18 +319,18 @@ Input::output_js_social_data(
 			</th>
 			<td>
 				<?php
-				// phpcs:disable, WordPress.Security.EscapeOutput -- make_single_select_form() escapes.
+				// phpcs:disable WordPress.Security.EscapeOutput -- make_single_select_form() escapes.
 				echo Form::make_single_select_form( [
 					'id'       => 'autodescription-meta[tw_card_type]',
 					'class'    => 'tsf-term-select-wrap',
 					'name'     => 'autodescription-meta[tw_card_type]',
 					'options'  => array_merge(
-						[ '' => sprintf( $_default_i18n, Meta\Twitter::get_generated_card_type( $generator_args ) ) ],
+						[ '' => \sprintf( $_default_i18n, Meta\Twitter::get_generated_card_type( $generator_args ) ) ],
 						array_combine( $tw_suported_cards, $tw_suported_cards ),
 					),
 					'selected' => $meta['tw_card_type'],
 				] );
-				// phpcs:enable, WordPress.Security.EscapeOutput
+				// phpcs:enable WordPress.Security.EscapeOutput
 				?>
 			</td>
 		</tr>
@@ -349,13 +349,13 @@ Input::output_js_social_data(
 				</label>
 			</th>
 			<td>
-				<input type=url name="autodescription-meta[social_image_url]" id=autodescription_meta_socialimage-url placeholder="<?= \esc_attr( $image_placeholder ) ?>" value="<?= \esc_attr( $meta['social_image_url'] ) ?>" size=40 autocomplete=off />
-				<input type=hidden name="autodescription-meta[social_image_id]" id=autodescription_meta_socialimage-id value="<?= \absint( $meta['social_image_id'] ) ?>" disabled class=tsf-enable-media-if-js />
+				<input type=url name="autodescription-meta[social_image_url]" id=autodescription_meta_socialimage-url placeholder="<?= \esc_attr( $image_placeholder ) ?>" value="<?= \esc_attr( $meta['social_image_url'] ) ?>" size=40 autocomplete=off>
+				<input type=hidden name="autodescription-meta[social_image_id]" id=autodescription_meta_socialimage-id value="<?= \absint( $meta['social_image_id'] ) ?>" disabled class=tsf-enable-media-if-js>
 				<div class="hide-if-no-tsf-js tsf-term-button-wrap">
 					<?php
-					// phpcs:disable, WordPress.Security.EscapeOutput -- get_image_uploader_form escapes. (phpcs breaks here, so we use disable)
+					// phpcs:disable WordPress.Security.EscapeOutput -- get_image_uploader_form escapes. (phpcs breaks here, so we use disable)
 					echo Form::get_image_uploader_form( [ 'id' => 'autodescription_meta_socialimage' ] );
-					// phpcs:enable, WordPress.Security.EscapeOutput
+					// phpcs:enable WordPress.Security.EscapeOutput
 					?>
 				</div>
 			</td>
@@ -381,7 +381,39 @@ Input::output_js_social_data(
 				</label>
 			</th>
 			<td>
-				<input type=url name="autodescription-meta[canonical]" id="autodescription-meta[canonical]" placeholder="<?= \esc_attr( $canonical_placeholder ) ?>" value="<?= \esc_attr( $meta['canonical'] ) ?>" size=40 autocomplete=off />
+				<input type=url name="autodescription-meta[canonical]" id="autodescription-meta[canonical]" placeholder="<?= \esc_url( $default_canonical ) ?>" value="<?= \esc_attr( $meta['canonical'] ) ?>" size=40 autocomplete=off>
+				<?php
+				$tax_object  = \get_taxonomy( $taxonomy );
+				$permastruct = Meta\URI\Utils::get_url_permastruct( $generator_args );
+
+				$parent_term_slugs        = [];
+				$is_taxonomy_hierarchical = $tax_object->hierarchical && $tax_object->rewrite['hierarchical'];
+
+				if ( $is_taxonomy_hierarchical && str_contains( $permastruct, "%$taxonomy%" ) ) {
+					// self is filled by current term name.
+					foreach ( Data\Term::get_term_parents( $term_id, $taxonomy ) as $parent_term ) {
+						// We write it like this instead of [ id => slug ] to prevent reordering numericals via JSON.parse.
+						$parent_term_slugs[] = [
+							'id'   => $parent_term->term_id,
+							'slug' => $parent_term->slug,
+						];
+					}
+				}
+
+				Input::output_js_canonical_data(
+					'autodescription-meta[canonical]',
+					[
+						'state' => [
+							'refCanonicalLocked' => false,
+							'defaultCanonical'   => \esc_url( $default_canonical ),
+							'preferredScheme'    => Meta\URI\Utils::get_preferred_url_scheme(),
+							'urlStructure'       => Meta\URI\Utils::get_url_permastruct( $generator_args ),
+							'parentTermSlugs'    => $parent_term_slugs,
+							'isHierarchical'     => $is_taxonomy_hierarchical,
+						],
+					],
+				);
+				?>
 			</td>
 		</tr>
 
@@ -395,18 +427,18 @@ Input::output_js_social_data(
 					'https://developers.google.com/search/docs/advanced/robots/robots_meta_tag#directives',
 				);
 				?>
-				</th>
+			</th>
 			<td>
 				<?php
 				foreach ( $robots_settings as $_s ) {
-					// phpcs:disable, WordPress.Security.EscapeOutput -- make_single_select_form() escapes.
+					// phpcs:disable WordPress.Security.EscapeOutput -- make_single_select_form() escapes.
 					echo Form::make_single_select_form( [
 						'id'       => $_s['id'],
 						'class'    => 'tsf-term-select-wrap',
 						'name'     => $_s['name'],
 						'label'    => $_s['label'],
 						'options'  => [
-							0  => sprintf( $_default_i18n, $_s['_default'] ),
+							0  => \sprintf( $_default_i18n, $_s['_default'] ),
 							-1 => $_s['force_on'],
 							1  => $_s['force_off'],
 						],
@@ -417,7 +449,7 @@ Input::output_js_social_data(
 							'defaultI18n'        => $_default_i18n,
 						],
 					] );
-					// phpcs:enable, WordPress.Security.EscapeOutput
+					// phpcs:enable WordPress.Security.EscapeOutput
 				}
 				?>
 			</td>
@@ -431,13 +463,13 @@ Input::output_js_social_data(
 					echo ' ';
 					HTML::make_info(
 						\__( 'This will force visitors to go to another URL.', 'autodescription' ),
-						'https://developers.google.com/search/docs/advanced/crawling/301-redirects',
+						'https://developers.google.com/search/docs/crawling-indexing/301-redirects',
 					);
 					?>
 				</label>
 			</th>
 			<td>
-				<input type=url name="autodescription-meta[redirect]" id="autodescription-meta[redirect]" value="<?= \esc_attr( $meta['redirect'] ) ?>" size=40 autocomplete=off />
+				<input type=url name="autodescription-meta[redirect]" id="autodescription-meta[redirect]" value="<?= \esc_attr( $meta['redirect'] ) ?>" size=40 autocomplete=off>
 			</td>
 		</tr>
 	</tbody>

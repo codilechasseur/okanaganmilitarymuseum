@@ -8,19 +8,21 @@ namespace The_SEO_Framework\Meta\URI;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\{
+use function The_SEO_Framework\{
+	get_query_type_from_args,
 	memo,
+	normalize_generation_args,
 	umemo,
 };
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Helper\Query,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -60,13 +62,14 @@ class Utils {
 	 * @return string The detected URl scheme, lowercase.
 	 */
 	public static function detect_site_url_scheme() {
-		return strtolower( static::get_parsed_front_page_url()['scheme'] ?? (
-			Query::is_ssl() ? 'https' : 'http'
-		) );
+		return strtolower(
+			   self::get_parsed_front_page_url()['scheme']
+			?? ( Query::is_ssl() ? 'https' : 'http' ),
+		);
 	}
 
 	/**
-	 * Fetches home URL host. Like "wordpress.org".
+	 * Fetches home URL host. Like "theseoframework.com".
 	 * If this fails, you're going to have a bad time.
 	 *
 	 * @since 2.7.0
@@ -80,7 +83,7 @@ class Utils {
 	 */
 	public static function get_site_host() {
 
-		$parsed_url = static::get_parsed_front_page_url();
+		$parsed_url = self::get_parsed_front_page_url();
 
 		$host = $parsed_url['host'] ?? '';
 
@@ -88,6 +91,20 @@ class Utils {
 			$host .= ":{$parsed_url['port']}";
 
 		return $host;
+	}
+
+	/**
+	 * Fetches home URL path. Like "/" or "/subdir/".
+	 *
+	 * The value should be equivalent to `$wp_rewrite->front`,
+	 * but then filtered via `get_home_url()`.
+	 *
+	 * @since 5.1.3
+	 *
+	 * @return string The home URL path
+	 */
+	public static function get_site_path() {
+		return self::get_parsed_front_page_url()['path'] ?? '/';
 	}
 
 	/**
@@ -107,6 +124,9 @@ class Utils {
 	 * Slashes the root (home) URL.
 	 *
 	 * @since 5.0.0
+	 * @todo shouldn't this have been "contextual_trailingslashit"?
+	 * @todo PHP 8.5+ support: Use `empty($path) ? new Uri\Rfc3986\Uri( $url )->withPath('/')->toString()`.
+	 *       Note that this may interfere with translation plugins that do not accurately parse the query.
 	 *
 	 * @param string $url The root URL.
 	 * @return string The root URL plausibly with added slashes.
@@ -139,7 +159,7 @@ class Utils {
 	 */
 	public static function get_preferred_url_scheme() {
 
-		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- I know.
 		if ( null !== $memo = memo() ) return $memo;
 
 		// May be 'https', 'http', or 'automatic'.
@@ -152,7 +172,7 @@ class Utils {
 				break;
 			case 'automatic':
 			default:
-				$scheme = static::detect_site_url_scheme();
+				$scheme = self::detect_site_url_scheme();
 		}
 
 		/**
@@ -173,7 +193,7 @@ class Utils {
 	 * @return string The URL with the preferred scheme.
 	 */
 	public static function set_preferred_url_scheme( $url ) {
-		return static::set_url_scheme( $url, static::get_preferred_url_scheme() );
+		return self::set_url_scheme( $url, self::get_preferred_url_scheme() );
 	}
 
 	/**
@@ -193,7 +213,7 @@ class Utils {
 	 */
 	public static function set_url_scheme( $url, $scheme = null ) {
 
-		$url = static::make_fully_qualified_url( $url );
+		$url = self::make_fully_qualified_url( $url );
 
 		switch ( $scheme ) {
 			case 'https':
@@ -228,11 +248,11 @@ class Utils {
 	 */
 	public static function make_absolute_current_scheme_url( $url ) {
 
-		if ( static::url_matches_blog_domain( $url ) )
-			return static::set_preferred_url_scheme( $url );
+		if ( self::url_matches_blog_domain( $url ) )
+			return self::set_preferred_url_scheme( $url );
 
 		// This also sets preferred URL scheme if path.
-		return static::convert_path_to_url( $url );
+		return self::convert_path_to_url( $url );
 	}
 
 	/**
@@ -245,8 +265,8 @@ class Utils {
 	 *
 	 * @since 2.6.5
 	 * @since 5.0.0 Moved from `\The_SEO_Framework\Load`.
-	 * @see `static::set_url_scheme()` to set the correct scheme.
-	 * @see `static::convert_path_to_url()` to create URLs from paths.
+	 * @see `self::set_url_scheme()` to set the correct scheme.
+	 * @see `self::convert_path_to_url()` to create URLs from paths.
 	 *
 	 * @param string $url The current maybe not fully qualified URL. Required.
 	 * @return string $url
@@ -279,19 +299,19 @@ class Utils {
 			   umemo( __METHOD__ )
 			?? umemo(
 				__METHOD__,
-				static::set_url_scheme( \sanitize_url(
+				self::set_url_scheme( \sanitize_url(
 					Data\Blog::get_front_page_url(),
-					[ 'https', 'http' ]
-				) )
+					[ 'https', 'http' ],
+				) ),
 			);
 
 		// Test for likely match early, before transforming.
 		if ( 0 === stripos( $url, $home_domain ) )
 			return true;
 
-		$url = static::set_url_scheme( \sanitize_url(
+		$url = self::set_url_scheme( \sanitize_url(
 			$url,
-			[ 'https', 'http' ]
+			[ 'https', 'http' ],
 		) );
 
 		// If they start with the same, we can assume it's the same domain.
@@ -328,8 +348,8 @@ class Utils {
 		return \WP_Http::make_absolute_url(
 			$path,
 			\trailingslashit(
-				$url ?: static::set_preferred_url_scheme( static::get_site_host() )
-			)
+				$url ?: self::set_preferred_url_scheme( self::get_site_host() ),
+			),
 		);
 	}
 
@@ -377,7 +397,7 @@ class Utils {
 			}
 
 			if ( $_query )
-				$url = static::append_query_to_url( $url, $_query );
+				$url = self::append_query_to_url( $url, $_query );
 		} else {
 			if ( $use_base ) {
 				$url = \add_query_arg( 'paged', $page, $url );
@@ -418,12 +438,13 @@ class Utils {
 			$page ??= max( Query::paged(), Query::page() );
 
 			if ( $page > 1 ) {
-				$user_slash = ( $GLOBALS['wp_rewrite']->use_trailing_slashes ? '/' : '' );
-				$use_base ??=
-					   Query::is_real_front_page()
-					|| Query::is_archive()
-					|| Query::is_singular_archive()
-					|| Query::is_search();
+				$user_slash = $GLOBALS['wp_rewrite']->use_trailing_slashes ? '/' : '';
+
+				$use_base
+					??= Query::is_real_front_page()
+					 || Query::is_archive()
+					 || Query::is_singular_archive()
+					 || Query::is_search();
 
 				if ( $use_base ) {
 					$find = "/{$GLOBALS['wp_rewrite']->pagination_base}/{$page}{$user_slash}";
@@ -444,7 +465,7 @@ class Utils {
 
 					// Add back the query.
 					if ( $_query )
-						$url = static::append_query_to_url( $url, $_query );
+						$url = self::append_query_to_url( $url, $_query );
 				}
 			}
 		} else {
@@ -479,5 +500,101 @@ class Utils {
 			return "$url&$query{$fragment}";
 
 		return "$url?$query{$fragment}";
+	}
+
+
+	/**
+	 * Returns the permalink structure for the given query.
+	 * Does not support pagination or endpoint masks.
+	 *
+	 * This method is meant for canonical URL prediction in JavaScript.
+	 *
+	 * Ref, WP Core:
+	 * - `get_permalink()`, leads to: `get_page_link()`, `get_attachment_link()`, `get_post_permalink()`
+	 * - `get_term_link()`
+	 *
+	 * @since 5.1.0
+	 *
+	 * @param array $args The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+	 * @return string The URL permastructure for the given query.
+	 */
+	public static function get_url_permastruct( $args ) {
+		global $wp_rewrite;
+
+		normalize_generation_args( $args );
+
+		switch ( get_query_type_from_args( $args ) ) {
+			case 'single':
+				if ( Query::is_static_front_page( $args['id'] ) ) {
+					$permastruct = $wp_rewrite->front;
+				} else {
+					$post_type = Query::get_post_type_real_id( $args['id'] );
+
+					switch ( $post_type ) {
+						case 'page':
+							// Both translate to the post's name; this translation eases later processing.
+							$permastruct = str_replace( '%pagename%', '%postname%', $wp_rewrite->get_page_permastruct() );
+							break;
+						case 'attachment':
+							if ( Query\Utils::using_pretty_permalinks() ) {
+								$attachment  = \get_post( $args['id'] );
+								$parent_post = $attachment->post_parent;
+
+								if ( $parent_post ) {
+									$parentslug = self::get_relative_part_from_url( \get_permalink( $parent_post ) );
+
+									// This was probably a workaround for paginated parent links. See `get_attachment_link()`.
+									// We should also account for this on the Canonical URL Notation Tracker, but this is an extreme oddity.
+									// I doubt anyone is managing attachment slugs, especially switching from numericals to non-numericals.
+									if (
+										   is_numeric( $attachment->post_name )
+										|| str_contains( \get_option( 'permalink_structure' ), '%category%' )
+									) {
+										$namestruct = 'attachment/%postname%';
+									} else {
+										$namestruct = '%postname%';
+									}
+
+									// Odd case is odd. See `get_attachment_link()`.
+									// Introduced at https://core.trac.wordpress.org/ticket/1776 -- no explanation provided.
+									if ( str_contains( $parentslug, '?' ) ) {
+										$permastruct = $namestruct;
+									} else {
+										$permastruct = \trailingslashit( $parentslug ) . $namestruct;
+									}
+								} else {
+									$permastruct = '%postname%';
+								}
+								break;
+							} // else: ?attachment_id=%post_id%, but this is handled via default.
+							break;
+						case 'post':
+							$permastruct = $wp_rewrite->permalink_structure;
+							break;
+						// actually: `\in_array( $post_type, \get_post_types( [ '_builtin' => false ] ), true )`, but we covered all others above.
+						default:
+							$permastruct = \is_post_type_hierarchical( $post_type )
+								? $wp_rewrite->get_page_permastruct()
+								: $wp_rewrite->get_extra_permastruct( $post_type );
+
+							// Both translate to the post's name; this translation eases later processing.
+							$permastruct = str_replace( "%{$post_type}%", '%postname%', $permastruct );
+					}
+				}
+				break;
+			case 'homeblog':
+				$permastruct = $wp_rewrite->front;
+				break;
+			case 'term':
+				$permastruct = $wp_rewrite->get_extra_permastruct( $args['tax'] );
+				break;
+			case 'pta':
+				$permastruct = $wp_rewrite->get_extra_permastruct( $args['pta'] );
+				break;
+			case 'user':
+				$permastruct = $wp_rewrite->get_author_permastruct();
+		}
+
+		return '/' . ltrim( \user_trailingslashit( $permastruct ?? '' ), '/' );
 	}
 }

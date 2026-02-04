@@ -8,19 +8,19 @@ namespace The_SEO_Framework\Meta;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\{
+use function The_SEO_Framework\{
 	umemo,
 	normalize_generation_args,
 };
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Helper\Query,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -70,7 +70,7 @@ class Robots {
 		return umemo( __METHOD__ ) ?? umemo(
 			__METHOD__,
 			Data\Blog::is_public()
-				? implode( ',', static::get_generated_meta() )
+				? implode( ',', self::get_generated_meta() )
 				: '',
 		);
 	}
@@ -84,8 +84,9 @@ class Robots {
 	 *
 	 * @param array|null $args    The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
 	 *                            Leave null to autodetermine query.
-	 * @param array|null $get     The robots types to retrieve. Leave null to get all. Set array to pick: {
-	 *    'noindex', 'nofollow', 'noarchive', 'max_snippet', 'max_image_preview', 'max_video_preview'
+	 * @param array|null $get     The robots types to retrieve. Accepts an array of
+	 *                            'noindex', 'nofollow', 'noarchive', 'max_snippet', 'max_image_preview', 'max_video_preview'.
+	 *                            Leave null to retrieve all.
 	 * }
 	 * @param int <bit>  $options The options level. {
 	 *    0 = 0b000: Ignore nothing. Collect no assertions. (Default front-end.)
@@ -93,8 +94,18 @@ class Robots {
 	 *    2 = 0b010: Ignore post/term setting. (\The_SEO_Framework\ROBOTS_IGNORE_SETTINGS)
 	 *    4 = 0b100: Collect assertions. (\The_SEO_Framework\ROBOTS_ASSERT)
 	 * }
-	 * @return array Only values actualized for display: {
-	 *    string index : string value
+	 * @return array {
+	 *     The generated robots meta. Only values actualized for display are sent back.
+	 *
+	 *     @type ?string $noindex           If set, it should be 'noindex'.
+	 *     @type ?string $nofollow          If set, it should be 'nofollow'.
+	 *     @type ?string $noarchive         If set, it should be 'noarchive'.
+	 *     @type ?string $max_snippet       If set, it should be 'max-snippet:<R>=-1>',
+	 *                                      where '<R>=-1>' is a number of or above -1.
+	 *     @type ?string $max_image_preview If set, it should be 'max-image-preview:<none|standard|large>',
+	 *                                      where any of 'none', 'standard', or 'large' is chosen.
+	 *     @type ?string $max_video_preview If set, it should be 'max-video-preview:<R>=-1>',
+	 *                                      where '<R>=-1>' is a number of or above -1.
 	 * }
 	 */
 	public static function get_generated_meta( $args = null, $get = null, $options = 0b00 ) {
@@ -133,13 +144,18 @@ class Robots {
 		 * @since 4.0.3 Changed `$meta` key `max_snippet_length` to `max_snippet`
 		 * @since 4.2.0 Now supports the `$args['pta']` index.
 		 *
-		 * @param array      $meta The current robots meta. {
-		 *     'noindex'           : 'noindex'
-		 *     'nofollow'          : 'nofollow'
-		 *     'noarchive'         : 'noarchive'
-		 *     'max_snippet'       : 'max-snippet:<int>'
-		 *     'max_image_preview' : 'max-image-preview:<string>'
-		 *     'max_video_preview' : 'max-video-preview:<string>'
+		 * @param array      $meta {
+		 *     The current robots meta.
+		 *
+		 *     @type ?string $noindex           If set, it should be 'noindex'.
+		 *     @type ?string $nofollow          If set, it should be 'nofollow'.
+		 *     @type ?string $noarchive         If set, it should be 'noarchive'.
+		 *     @type ?string $max_snippet       If set, it should be 'max-snippet:<R>=-1>',
+		 *                                      where '<R>=-1>' is a number of or above -1.
+		 *     @type ?string $max_image_preview If set, it should be 'max-image-preview:<none|standard|large>',
+		 *                                      where any of 'none', 'standard', or 'large' is chosen.
+		 *     @type ?string $max_video_preview If set, it should be 'max-video-preview:<R>=-1>',
+		 *                                      where '<R>=-1>' is a number of or above -1.
 		 * }
 		 * @param array|null $args The query arguments. Contains 'id', 'tax', 'pta', and 'uid'.
 		 *                         Is null when the query is auto-determined.

@@ -6,15 +6,15 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-use \The_SEO_Framework\Admin\Settings\Layout\HTML;
+use The_SEO_Framework\Admin\Settings\Layout\HTML;
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -34,7 +34,7 @@ use \The_SEO_Framework\Admin\Settings\Layout\HTML;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -66,7 +66,7 @@ $dismiss_title_i18n = \__( 'Dismiss this notice', 'default' );
 
 $nonce_action = Admin\Notice\Persistent::_get_dismiss_nonce_action( $sanitized_key );
 
-$button_js = sprintf(
+$button_js = \sprintf(
 	'<a class="hide-if-no-tsf-js tsf-dismiss" href="javascript:;" title="%s" %s></a>',
 	\esc_attr( $dismiss_title_i18n ),
 	HTML::make_data_attributes( [
@@ -92,7 +92,7 @@ $button_nojs = vsprintf(
 						$sanitized_key,
 						$sanitized_key,
 						\esc_attr( $dismiss_title_i18n ),
-						sprintf( '<span class=screen-reader-text>%s</span>', \esc_html( $dismiss_title_i18n ) ),
+						\sprintf( '<span class=screen-reader-text>%s</span>', \esc_html( $dismiss_title_i18n ) ),
 					],
 				),
 			],
@@ -105,13 +105,15 @@ vprintf(
 	[
 		\esc_attr( $args['type'] ),
 		( $args['icon'] ? 'tsf-show-icon' : '' ),
-		sprintf(
-			// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- conditionals bug.
-			( ! $args['escape'] && 0 === stripos( $message, '<p' ) ? '%s' : '<p>%s</p>' ),
-			// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- the invoker should be mindful.
-			( $args['escape'] ? \esc_html( $message ) : $message )
+		\sprintf(
+			! $args['escape'] && 0 === stripos( $message, '<p' )
+				? '%s'
+				: '<p>%s</p>',
+			$args['escape']
+				? \esc_html( $message )
+				: $message, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the invoker should be mindful.
 		),
-		// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- they are.
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- they are.
 		$button_js . $button_nojs,
 	],
 );
