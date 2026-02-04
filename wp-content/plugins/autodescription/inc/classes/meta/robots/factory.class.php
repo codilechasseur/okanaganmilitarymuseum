@@ -8,11 +8,11 @@ namespace The_SEO_Framework\Meta\Robots;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Data;
+use The_SEO_Framework\Data;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -33,6 +33,8 @@ use \The_SEO_Framework\Data;
  * @since 4.2.0
  * @since 5.0.0 Moved from `\The_SEO_Framework\Builders\Robots`.
  * @access private
+ *
+ * @NOTE: All static:: calls within this class are intentional to allow overrides in subclasses.
  */
 class Factory {
 
@@ -50,10 +52,8 @@ class Factory {
 
 	/**
 	 * @since 4.2.0
-	 * @var array|null Null to autodetermine query, otherwise the query arguments. : {
-	 *    int    $id       The Post, Page or Term ID to generate robots for.
-	 *    string $taxonomy The taxonomy.
-	 * }
+	 * @var array|null $args The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+	 *                       Leave null to autodetermine query.
 	 */
 	protected static $args;
 
@@ -69,16 +69,16 @@ class Factory {
 	 * @since 4.2.0
 	 * @access private
 	 *
-	 * @param null|array $args    The robots meta arguments, leave null to autodetermine query : {
-	 *    int    $id       The Post, Page or Term ID to generate the URL for.
-	 *    string $taxonomy The taxonomy.
-	 * }
+	 * @param array|null $args    The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+	 *                            Leave null to autodetermine query.
 	 * @param int        $options Modifies return values/assertions. See const ROBOTS_* at /bootstrap/define.php
 	 * @return Factory $this
 	 */
 	public function set( $args = null, $options = 0 ) {
+
 		static::$args    = $args;
 		static::$options = $options;
+
 		return $this;
 	}
 
@@ -90,7 +90,8 @@ class Factory {
 	 * @generator
 	 */
 	public static function generator() {
-		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition.Found -- Shhh. It's OK.
+
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.Found -- Shhh. It's OK.
 		while ( true ) switch ( $sender = yield static::START ) {
 			case 'noindex':
 			case 'nofollow':
@@ -114,7 +115,7 @@ class Factory {
 			default:
 				static::$tsf->_doing_it_wrong(
 					__METHOD__,
-					sprintf( 'Unregistered robots-generator getter provided: <code>%s</code>.', \esc_html( $sender ) ),
+					\sprintf( 'Unregistered robots-generator getter provided: <code>%s</code>.', \esc_html( $sender ) ),
 					'4.2.0',
 				);
 				yield static::HALT;

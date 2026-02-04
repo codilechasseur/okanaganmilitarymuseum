@@ -10,7 +10,7 @@ namespace The_SEO_Framework\Traits\Internal;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -80,7 +80,7 @@ trait Static_Deprecator {
 			\tsf()->_inaccessible_p_or_m(
 				"$$name",
 				trim(
-					sprintf(
+					\sprintf(
 						'%s;%s',
 						$since ? "Since $since of The SEO Framework" : '',
 						$alternative ? " Use $alternative instead" : '',
@@ -97,8 +97,8 @@ trait Static_Deprecator {
 			\tsf()->_inaccessible_p_or_m( "$$name", 'unknown' );
 
 			// Invoke default behavior: Write variable if it's not protected.
-			if ( property_exists( self, $name ) )
-				self::$name = $value;
+			if ( property_exists( static::class, $name ) )
+				static::$$name = $value;
 		}
 	}
 
@@ -123,7 +123,7 @@ trait Static_Deprecator {
 			\tsf()->_inaccessible_p_or_m(
 				"$$name",
 				trim(
-					sprintf(
+					\sprintf(
 						'%s;%s',
 						$since ? "Since $since of The SEO Framework" : '',
 						$alternative ? " Use $alternative instead" : '',
@@ -158,7 +158,9 @@ trait Static_Deprecator {
 			\tsf()->_deprecated_function(
 				\esc_html( "{$this->colloquial_handle}->$name()" ), // redundant escape
 				\esc_html( $deprecated['since'] ?? '' ),            // redundant escape
-				! empty( $deprecated['alternative'] ) ? \esc_html( $deprecated['alternative'] ) : null,
+				! empty( $deprecated['alternative'] )
+					? \esc_html( $deprecated['alternative'] )
+					: null,
 			);
 
 			$fallback = $deprecated['fallback'] ?? null;
@@ -166,7 +168,7 @@ trait Static_Deprecator {
 			if ( $fallback )
 				return \call_user_func_array( $fallback, $arguments );
 		} else {
-			\tsf()->_inaccessible_p_or_m( \esc_html( "{$this->colloquial_handle}->$name()" ) );
+			\tsf()->_inaccessible_p_or_m( "{$this->colloquial_handle}->$name()" );
 		}
 	}
 
@@ -179,7 +181,7 @@ trait Static_Deprecator {
 	 * @param array  $arguments The method arguments.
 	 * @return void
 	 */
-	final public static function __callStatic( $name, $arguments ) {
+	final public static function __callStatic( $name, $arguments ) { // phpcs:ignore Generic.CodeAnalysis -- abstract magic method.
 		\tsf()->_inaccessible_p_or_m(
 			\esc_html( "$name()" ),
 			'Method is of unknown pool. Do not call pool methods statically! A fatal error might follow.',

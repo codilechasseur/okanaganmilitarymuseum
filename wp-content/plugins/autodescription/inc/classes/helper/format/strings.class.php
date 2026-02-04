@@ -10,7 +10,7 @@ namespace The_SEO_Framework\Helper\Format;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -78,10 +78,12 @@ class Strings {
 	 *              2. Moved from \The_SEO_Framework\Load.
 	 *
 	 * @param string $string Required. The string to count words in.
-	 * @param array  $args   The word counting arguments : {
-	 *     int filter_under       : Consider word duplication under this number not a duplicate, default 3.
-	 *     int filter_short_under : Consider short word duplication under this number not a duplicate, default 5.
-	 *     int short_word_length  : Consider words under this character length "short", default 3.
+	 * @param array  $args   {
+	 *     Optional. The word counting arguments.
+	 *
+	 *     @type int $filter_under       Consider word duplication under this number not a duplicate, default 3.
+	 *     @type int $filter_short_under Consider short word duplication under this number not a duplicate, default 5.
+	 *     @type int $short_word_length  Consider words under this character length "short", default 3.
 	 * }
 	 * @return array Containing arrays of words with their count.
 	 */
@@ -211,7 +213,7 @@ class Strings {
 		// Tries to match "\x20" when the sentence contains no spaces, subsequently failing because trim() already removed that.
 		// Uses $ to consider cut-off endings under $max_char_length
 		preg_match(
-			sprintf(
+			\sprintf(
 				'/^.{0,%d}(?:[^\P{Po}\'\":]|[\p{Pc}\p{Pd}\p{Pf}\p{Z}]|\x20|$)/su',
 				$max_char_length,
 			),
@@ -239,7 +241,8 @@ class Strings {
 		 * Play with it here:
 		 * https://regex101.com/r/u0DIgx/5/ (old)
 		 * https://regex101.com/r/G92lUt/5 (old)
-		 * https://regex101.com/r/dAqhWC/1 (current)
+		 * https://regex101.com/r/dAqhWC/1 (old)
+		 * https://regex101.com/r/dAqhWC/5 (current) (benchmark vs /dAqhWC/1: https://3v4l.org/1jGQG)
 		 *
 		 * TODO Group 4's match is repeated. However, referring to it as (4) will cause it to congeal into 3.
 		 * TODO `([\p{Z}\w])` will try to match any word boundary even if there aren't any. This must be detected above.
@@ -252,6 +255,7 @@ class Strings {
 		 * @param array $matches : {
 		 *    0 : Full sentence.
 		 *    1 : Sentence after leading punctuation (if any), but including opening punctuation, marks, and ¡¿, before first punctuation (if any).
+		 *        Can include abbreviations.
 		 *    2 : First one character following [1], always some form of punctuation. Won't be set if [3] is set.
 		 *    3 : Following [1] until last punctuation that isn't some sort of connecting punctuation that's leading a word-boundary.
 		 *    4 : First three words leading [3]. Connecting punctuations that splits words are included as non-countable.
@@ -259,7 +263,7 @@ class Strings {
 		 * }
 		 */
 		preg_match(
-			'/(?:\A[\p{P}\p{Z}]*?)?([\P{Po}\p{M}\xBF\xA1:\'\p{Z}]+[\p{Z}\w])(?:([^\P{Po}\p{M}\xBF\xA1:]\Z(*ACCEPT))|((?(?=.+(?:\w+[\p{Pc}\p{Pd}\p{Pf}\p{Z}]*){1,3}|[\p{Po}]\Z)(?:[^\p{Pe}\p{Pf}]*+.*[\p{Pe}\p{Pf}]+\Z(*ACCEPT)|.*[^\P{Po}\p{M}\xBF\xA1:][^\P{Nd}\p{Z}]*)|.*\Z(*ACCEPT)))(?>(.+?\p{Z}*(?:\w+[\p{Pc}\p{Pd}\p{Pf}\p{Z}]*){1,3})|[^\p{Pc}\p{Pd}\p{M}\xBF\xA1:])?)(.+)?/su',
+			'/(?:\A[\p{P}\p{Z}]*?)?((?:(?:\p{Z}*?\w\.)+[\P{Po}\p{M}\xBF\xA1:\'\p{Z}\.]*|[\P{Po}\p{M}\xBF\xA1:\'\p{Z}]+)[\p{Z}\w])(?:([^\P{Po}\p{M}\xBF\xA1:]\Z(*ACCEPT))|((?(?=.+(?:\w+[\p{Pc}\p{Pd}\p{Pf}\p{Z}]*){1,3}|[\p{Po}]\Z)(?:[^\p{Pe}\p{Pf}]*+.*[\p{Pe}\p{Pf}]+\Z(*ACCEPT)|.*[^\P{Po}\p{M}\xBF\xA1:][^\P{Nd}\p{Z}]*)|.*\Z(*ACCEPT)))(?>(.+?\p{Z}*(?:\w+[\p{Pc}\p{Pd}\p{Pf}\p{Z}]*){1,3})|[^\p{Pc}\p{Pd}\p{M}\xBF\xA1:])?)(.+)?/su',
 			$sentence,
 			$matches,
 		);

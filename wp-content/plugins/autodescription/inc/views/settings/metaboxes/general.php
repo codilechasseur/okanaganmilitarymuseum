@@ -6,24 +6,24 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-use \The_SEO_Framework\Admin\Settings\Layout\{
+use The_SEO_Framework\Admin\Settings\Layout\{
 	HTML,
 	Input,
 };
-use \The_SEO_Framework\Helper\{
+use The_SEO_Framework\Helper\{
 	Format\Markdown,
 	Post_Type,
 	Query,
 	Taxonomy,
 };
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2016 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2016 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -79,13 +79,13 @@ switch ( $instance ) :
 			 * @since 2.8.0
 			 * @param array $tabs The default tabs.
 			 */
-			(array) \apply_filters( 'the_seo_framework_general_settings_tabs', $tabs )
+			(array) \apply_filters( 'the_seo_framework_general_settings_tabs', $tabs ),
 		);
 		break;
 
 	case 'layout':
 		HTML::header_title( \__( 'Administrative Layout Settings', 'autodescription' ) );
-		HTML::description( \__( 'SEO hints can be visually displayed throughout the dashboard.', 'autodescription' ) );
+		HTML::description( \__( 'SEO hints and options are displayed throughout the dashboard.', 'autodescription' ) );
 
 		?>
 		<hr>
@@ -157,6 +157,40 @@ switch ( $instance ) :
 			],
 			true,
 		);
+
+		?>
+		<hr>
+		<?php
+		HTML::header_title( \__( 'Option Field Settings', 'autodescription' ) );
+
+		$term_info = HTML::make_info(
+			\__( 'Terms are entries in taxonomies, e.g., Categories and Tags.', 'autodescription' ),
+			'',
+			false,
+		);
+
+		HTML::wrap_fields(
+			[
+				Input::make_checkbox( [
+					'id'     => 'display_list_edit_options',
+					'label'  => \esc_html__( 'Display quick-edit and bulk-edit option fields?', 'autodescription' ),
+					'escape' => false,
+				] ),
+				Input::make_checkbox( [
+					'id'     => 'display_term_edit_options',
+					'label'  => \esc_html__( 'Display term-edit option fields?', 'autodescription' ) . " $term_info",
+					'escape' => false,
+				] ),
+				Input::make_checkbox( [
+					'id'     => 'display_user_edit_options',
+					'label'  => \esc_html__( 'Display user-edit option fields?', 'autodescription' ),
+					'escape' => false,
+				] ),
+			],
+			true,
+		);
+
+		HTML::description( \__( 'Note: Hiding option fields does not remove the data once stored in them.', 'autodescription' ) );
 		break;
 
 	case 'performance':
@@ -170,13 +204,13 @@ switch ( $instance ) :
 		HTML::description_noesc(
 			\esc_html__( "Altering the query allows for more control of the site's hierarchy.", 'autodescription' )
 			. '<br>' .
-			\esc_html__( 'If your website has thousands of pages, these options can greatly affect database performance.', 'autodescription' )
+			\esc_html__( 'If your website has thousands of pages, these options can greatly affect database performance.', 'autodescription' ),
 		);
 
 		HTML::description_noesc(
 			\esc_html__( 'Altering the query in the database is more accurate, but can increase database query time.', 'autodescription' )
 			. '<br>' .
-			\esc_html__( 'Altering the query on the site is much faster, but can lead to inconsistent pagination. It can also lead to 404 error messages if all queried pages have been excluded.', 'autodescription' )
+			\esc_html__( 'Altering the query on the site is much faster, but can lead to inconsistent pagination. It can also lead to 404 error messages if all queried pages have been excluded.', 'autodescription' ),
 		);
 
 		$query_types = (array) \apply_filters(
@@ -190,7 +224,7 @@ switch ( $instance ) :
 		$search_query_select_options = '';
 		$_current                    = Data\Plugin::get_option( 'alter_search_query_type' );
 		foreach ( $query_types as $value => $name ) {
-			$search_query_select_options .= sprintf(
+			$search_query_select_options .= \sprintf(
 				'<option value="%s" %s>%s</option>',
 				\esc_attr( $value ),
 				\selected( $_current, \esc_attr( $value ), false ),
@@ -201,7 +235,7 @@ switch ( $instance ) :
 		$archive_query_select_options = '';
 		$_current                     = Data\Plugin::get_option( 'alter_archive_query_type' );
 		foreach ( $query_types as $value => $name ) {
-			$archive_query_select_options .= sprintf(
+			$archive_query_select_options .= \sprintf(
 				'<option value="%s" %s>%s</option>',
 				\esc_attr( $value ),
 				\selected( $_current, \esc_attr( $value ), false ),
@@ -212,7 +246,7 @@ switch ( $instance ) :
 		$perform_alteration_i18n = \esc_html__( 'Perform alteration:', 'autodescription' );
 
 		$search_query_select_field = vsprintf(
-			'<label for="%1$s">%2$s</label><select name="%3$s" id="%1$s">%4$s</select>',
+			'<label for="%1$s"><strong>%2$s</strong></label> <select name="%3$s" id="%1$s">%4$s</select>',
 			[
 				Input::get_field_id( 'alter_search_query_type' ),
 				$perform_alteration_i18n,
@@ -222,7 +256,7 @@ switch ( $instance ) :
 		);
 
 		$archive_query_select_field = vsprintf(
-			'<label for="%1$s">%2$s</label><select name="%3$s" id="%1$s">%4$s</select>',
+			'<label for="%1$s"><strong>%2$s</strong></label> <select name="%3$s" id="%1$s">%4$s</select>',
 			[
 				Input::get_field_id( 'alter_archive_query_type' ),
 				$perform_alteration_i18n,
@@ -267,33 +301,45 @@ switch ( $instance ) :
 		<?php
 		HTML::header_title( \__( 'Scheme Settings', 'autodescription' ) );
 		HTML::description( \__( 'If your website is accessible via both HTTP as HTTPS, you may want to set this to HTTPS if not detected automatically. Secure connections are preferred by search engines.', 'autodescription' ) );
-		?>
-		<label for="<?php Input::field_id( 'canonical_scheme' ); ?>"><?= \esc_html_x( 'Preferred canonical URL scheme:', '= Detect Automatically, HTTPS, HTTP', 'autodescription' ) ?></label>
-		<select name="<?php Input::field_name( 'canonical_scheme' ); ?>" id="<?php Input::field_id( 'canonical_scheme' ); ?>">
-			<?php
-			$scheme_types = (array) \apply_filters(
-				'the_seo_framework_canonical_scheme_types',
-				[
-					'automatic' => sprintf(
-						/* translators: %s = HTTP or HTTPS */
-						\__( 'Detect automatically (%s)', 'autodescription' ),
-						strtoupper( Meta\URI\Utils::detect_site_url_scheme() ),
-					),
-					'http'      => 'HTTP',
-					'https'     => 'HTTPS',
-				],
-			);
-			$_current     = Data\Plugin::get_option( 'canonical_scheme' );
-			foreach ( $scheme_types as $value => $name )
-				printf(
-					'<option value="%s" %s>%s</option>',
-					\esc_attr( $value ),
-					\selected( $_current, \esc_attr( $value ), false ),
-					\esc_html( $name ),
-				);
-			?>
-		</select>
 
+		$scheme_options  = '';
+		$detected_scheme = Meta\URI\Utils::detect_site_url_scheme();
+		$current_scheme  = Data\Plugin::get_option( 'canonical_scheme' );
+		$scheme_types    = (array) \apply_filters(
+			'the_seo_framework_canonical_scheme_types',
+			[
+				'automatic' => \sprintf(
+					/* translators: %s = HTTP or HTTPS */
+					\__( 'Detect automatically (%s)', 'autodescription' ),
+					strtoupper( $detected_scheme ),
+				),
+				'http'      => 'HTTP',
+				'https'     => 'HTTPS',
+			],
+		);
+		foreach ( $scheme_types as $value => $name ) {
+			$scheme_options .= \sprintf(
+				'<option value="%s" %s>%s</option>',
+				\esc_attr( $value ),
+				\selected( $current_scheme, $value, false ),
+				\esc_html( $name ),
+			);
+		}
+
+		HTML::wrap_fields(
+			vsprintf(
+				'<label for="%1$s"><strong>%2$s</strong></label> <select name="%3$s" id="%1$s" %4$s>%5$s</select>',
+				[
+					Input::get_field_id( 'canonical_scheme' ),
+					\esc_html_x( 'Preferred canonical URL scheme:', '= Detect Automatically, HTTPS, HTTP', 'autodescription' ),
+					Input::get_field_name( 'canonical_scheme' ),
+					HTML::make_data_attributes( [ 'values' => [ 'automatic' => $detected_scheme ] ] ),
+					$scheme_options,
+				],
+			),
+			true,
+		);
+		?>
 		<hr>
 		<?php
 		HTML::header_title( \__( 'Paginated Link Relationship Settings', 'autodescription' ) );
@@ -351,23 +397,23 @@ switch ( $instance ) :
 
 			<p id=sitemaps-timestamp-format class=tsf-fields>
 				<span class=tsf-toblock>
-					<input type=radio name="<?php Input::field_name( 'timestamps_format' ); ?>" id="<?php Input::field_id( 'timestamps_format_0' ); ?>" value=0 <?php \checked( Data\Plugin::get_option( 'timestamps_format' ), '0' ); ?> />
+					<input type=radio name="<?php Input::field_name( 'timestamps_format' ); ?>" id="<?php Input::field_id( 'timestamps_format_0' ); ?>" value=0 <?php \checked( Data\Plugin::get_option( 'timestamps_format' ), '0' ); ?>>
 					<label for="<?php Input::field_id( 'timestamps_format_0' ); ?>">
 						<?php
-						// phpcs:ignore, WordPress.Security.EscapeOutput -- code_wrap escapes.
+						// phpcs:ignore WordPress.Security.EscapeOutput -- code_wrap escapes.
 						echo HTML::code_wrap( $timestamp_date ), ' ', HTML::make_info(
-							\__( 'This outputs the complete date.', 'autodescription' )
+							\__( 'This outputs the complete date.', 'autodescription' ),
 						);
 						?>
 					</label>
 				</span>
 				<span class=tsf-toblock>
-					<input type=radio name="<?php Input::field_name( 'timestamps_format' ); ?>" id="<?php Input::field_id( 'timestamps_format_1' ); ?>" value=1 <?php \checked( Data\Plugin::get_option( 'timestamps_format' ), '1' ); ?> />
+					<input type=radio name="<?php Input::field_name( 'timestamps_format' ); ?>" id="<?php Input::field_id( 'timestamps_format_1' ); ?>" value=1 <?php \checked( Data\Plugin::get_option( 'timestamps_format' ), '1' ); ?>>
 					<label for="<?php Input::field_id( 'timestamps_format_1' ); ?>">
 						<?php
-						// phpcs:ignore, WordPress.Security.EscapeOutput -- code_wrap escapes.
+						// phpcs:ignore WordPress.Security.EscapeOutput -- code_wrap escapes.
 						echo HTML::code_wrap( $timestamp_datetime ), ' ', HTML::make_info(
-							\__( 'This outputs the complete date including hours, minutes, seconds, and time zone.', 'autodescription' )
+							\__( 'This outputs the complete date including hours, minutes, seconds, and time zone.', 'autodescription' ),
 						);
 						?>
 					</label>
@@ -381,9 +427,9 @@ switch ( $instance ) :
 		HTML::header_title( \__( 'Exclusion Settings', 'autodescription' ) );
 		HTML::description( \__( 'Check these options to remove meta optimizations, SEO suggestions, and sitemap inclusions for selected post types and taxonomies.', 'autodescription' ) );
 		HTML::attention_description_noesc( Markdown::convert(
-			sprintf(
+			\sprintf(
 				/* translators: backticks are code wraps. Markdown! */
-				\esc_html__( "Exclusions don't block search engines. When a post type is publicly queryable and shouldn't be indexed, consider applying `noindex` via Robots Meta Settings to purge it from search engines.", 'autodescription' ),
+				\esc_html__( "Exclusions don't block search engines. If a post type is publicly queryable and shouldn't be indexed, don't exclude it. Instead, consider applying `noindex` via Robots Settings.", 'autodescription' ),
 				'#autodescription-robots-settings',
 			),
 			[ 'code' ],
@@ -404,7 +450,7 @@ switch ( $instance ) :
 			$_label = Post_Type::get_label( $post_type, false );
 			if ( ! \strlen( $_label ) ) continue;
 
-			$_label = sprintf(
+			$_label = \sprintf(
 				'%s &ndash; <code>%s</code>',
 				\esc_html( $_label ),
 				\esc_html( $post_type ),
@@ -435,7 +481,7 @@ switch ( $instance ) :
 			$_label = Taxonomy::get_label( $taxonomy, false );
 			if ( ! \strlen( $_label ) ) continue;
 
-			$_label = sprintf(
+			$_label = \sprintf(
 				'%s &ndash; <code>%s</code>',
 				\esc_html( $_label ),
 				\esc_html( $taxonomy ),

@@ -6,23 +6,23 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-use \The_SEO_Framework\Admin\Settings\Layout\{
+use The_SEO_Framework\Admin\Settings\Layout\{
 	HTML,
 	Input,
 };
-use \The_SEO_Framework\Data\Filter\Sanitize;
-use \The_SEO_Framework\Helper\Format\{
+use The_SEO_Framework\Data\Filter\Sanitize;
+use The_SEO_Framework\Helper\Format\{
 	Markdown,
 	Strings,
 };
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2016 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2016 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -62,7 +62,7 @@ switch ( $instance ) :
 			60 - \strlen( $cat_prefix ),
 		) );
 
-		$cat_title_full = sprintf(
+		$cat_title_full = \sprintf(
 			/* translators: 1: Title prefix. 2: Title. */
 			\esc_html_x( '%1$s %2$s', 'archive title', 'default' ),
 			$cat_prefix,
@@ -87,13 +87,13 @@ switch ( $instance ) :
 			<p>
 				<span class="tsf-title-additions-example-left hidden">
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 					echo HTML::code_wrap_noesc( $example_post_left );
 					?>
 				</span>
 				<span class="tsf-title-additions-example-right hidden">
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 					echo HTML::code_wrap_noesc( $example_post_right );
 					?>
 				</span>
@@ -103,25 +103,25 @@ switch ( $instance ) :
 			<p>
 				<span class="tsf-title-additions-example-left tsf-title-tax-prefix hidden">
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 					echo HTML::code_wrap_noesc( $example_tax_left_full );
 					?>
 				</span>
 				<span class="tsf-title-additions-example-right tsf-title-tax-prefix hidden">
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 					echo HTML::code_wrap_noesc( $example_tax_right_full );
 					?>
 				</span>
 				<span class="tsf-title-additions-example-left tsf-title-tax-noprefix hidden">
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 					echo HTML::code_wrap_noesc( $example_tax_left );
 					?>
 				</span>
 				<span class="tsf-title-additions-example-right tsf-title-tax-noprefix hidden">
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 					echo HTML::code_wrap_noesc( $example_tax_right );
 					?>
 				</span>
@@ -131,7 +131,7 @@ switch ( $instance ) :
 		<hr>
 		<?php
 		if (
-				Admin\Utils::display_extension_suggestions()
+			   Admin\Utils::display_extension_suggestions()
 			&& ! \current_theme_supports( 'title-tag' )
 			&& ! \defined( 'TSFEM_E_TITLE_FIX' )
 		) {
@@ -145,7 +145,7 @@ switch ( $instance ) :
 			<?php
 			HTML::description_noesc(
 				Markdown::convert(
-					sprintf(
+					\sprintf(
 						/* translators: 1: Extension name, 2: Extension link. Markdown!  */
 						\esc_html__( "The current theme doesn't support a feature that allows predictable output of titles. Consider installing [%1\$s](%2\$s) when you notice the title output in the browser-tab isn't as you have configured.", 'autodescription' ),
 						'Title Fix',
@@ -208,12 +208,12 @@ switch ( $instance ) :
 			<?php
 			foreach ( $title_separator as $name => $html ) {
 				vprintf(
-					'<input type=radio name="%1$s" id="%2$s" value="%3$s" %4$s %5$s /><label for="%2$s">%6$s</label>',
+					'<input type=radio name="%1$s" id="%2$s" value="%3$s" %4$s %5$s><label for="%2$s">%6$s</label>',
 					[
 						\esc_attr( Input::get_field_name( 'title_separator' ) ),
 						\esc_attr( Input::get_field_id( "title_separator_{$name}" ) ),
 						\esc_attr( $name ),
-						// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- make_data_attributes() escapes.
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- make_data_attributes() escapes.
 						HTML::make_data_attributes( [ 'entity' => \esc_html( $html ) ] ), // This will double escape, but we found no issues.
 						\checked( $default_title_separator, $name, false ),
 						\esc_html( $html ),
@@ -231,7 +231,7 @@ switch ( $instance ) :
 		HTML::description( \__( 'Some titles may have HTML tags inserted by the author for styling.', 'autodescription' ) );
 
 		$info = HTML::make_info(
-			sprintf(
+			\sprintf(
 				/* translators: %s = HTML tag example */
 				\__( 'This strips HTML tags, like %s, from the title. Disable this option to display generated HTML tags as plain text in meta titles.', 'autodescription' ),
 				'<code>&amp;lt;strong&amp;gt;</code>' // Double escaped HTML (&amp;) for attribute display.
@@ -262,10 +262,10 @@ switch ( $instance ) :
 			</label>
 		</p>
 		<p class=tsf-title-wrap>
-			<input type=text name="<?php Input::field_name( 'site_title' ); ?>" class=large-text id="<?php Input::field_id( 'site_title' ); ?>" placeholder="<?= \esc_html( Sanitize::metadata_content( Data\Blog::get_filtered_blog_name() ) ) ?>" value="<?= \esc_html( Sanitize::metadata_content( Data\Plugin::get_option( 'site_title' ) ) ) ?>" autocomplete=off />
+			<input type=text name="<?php Input::field_name( 'site_title' ); ?>" class=large-text id="<?php Input::field_id( 'site_title' ); ?>" placeholder="<?= \esc_html( Sanitize::metadata_content( Data\Blog::get_filtered_blog_name() ) ) ?>" value="<?= \esc_html( Sanitize::metadata_content( Data\Plugin::get_option( 'site_title' ) ) ) ?>" autocomplete=off>
 		</p>
 		<?php
-		HTML::description( \__( 'This option does not affect titles displayed directly on your website.', 'autodescription' ) );
+		HTML::description( \__( 'This option does not affect header titles displayed directly on your website.', 'autodescription' ) );
 		?>
 		<hr>
 
@@ -273,21 +273,21 @@ switch ( $instance ) :
 			<legend><?php HTML::header_title( \__( 'Site Title Location', 'autodescription' ) ); ?></legend>
 			<p id=tsf-title-location class=tsf-fields>
 				<span class=tsf-toblock>
-					<input type=radio name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_left' ); ?>" value=left <?php \checked( Data\Plugin::get_option( 'title_location' ), 'left' ); ?> />
+					<input type=radio name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_left' ); ?>" value=left <?php \checked( Data\Plugin::get_option( 'title_location' ), 'left' ); ?>>
 					<label for="<?php Input::field_id( 'title_location_left' ); ?>">
 						<span><?php \esc_html_e( 'Left:', 'autodescription' ); ?></span>
 						<?php
-						// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 						echo HTML::code_wrap_noesc( $args['examples']['left'] );
 						?>
 					</label>
 				</span>
 				<span class=tsf-toblock>
-					<input type=radio name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_right' ); ?>" value=right <?php \checked( Data\Plugin::get_option( 'title_location' ), 'right' ); ?> />
+					<input type=radio name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_right' ); ?>" value=right <?php \checked( Data\Plugin::get_option( 'title_location' ), 'right' ); ?>>
 					<label for="<?php Input::field_id( 'title_location_right' ); ?>">
 						<span><?php \esc_html_e( 'Right:', 'autodescription' ); ?></span>
 						<?php
-						// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 						echo HTML::code_wrap_noesc( $args['examples']['right'] );
 						?>
 					</label>

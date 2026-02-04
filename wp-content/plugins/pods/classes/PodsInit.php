@@ -782,7 +782,7 @@ class PodsInit {
 		];
 
 		/**
-		 * Allow filtering hte admin config data.
+		 * Allow filtering the admin config data.
 		 *
 		 * @since 2.8.0
 		 *
@@ -1996,8 +1996,8 @@ class PodsInit {
 			$args['labels'] = [];
 		}
 
-		$is_placeholder_label = Store::PLACEHOLDER === pods_v( 'label', $args );
-		$is_placeholder_description = Store::PLACEHOLDER === pods_v( 'description', $args );
+		$is_placeholder_label = defined( Store::class . '::PLACEHOLDER' ) && Store::PLACEHOLDER === pods_v( 'label', $args );
+		$is_placeholder_description = defined( Store::class . '::PLACEHOLDER' ) && Store::PLACEHOLDER === pods_v( 'description', $args );
 
 		if ( $is_placeholder_label || $is_placeholder_description ) {
 			$default_object_labels = Store::get_default_object_labels();
@@ -2114,7 +2114,7 @@ class PodsInit {
 
 		// WP 5.1+.
 		add_action( 'wp_insert_site', array( $this, 'new_blog' ) );
-		// WP < 5.1. (Gets automaticaly removed if `wp_insert_site` is called.
+		// WP < 5.1. (Gets automatically removed if `wp_insert_site` is called.
 		add_action( 'wpmu_new_blog', array( $this, 'new_blog' ) );
 
 		if ( empty( self::$version ) || version_compare( self::$version, PODS_VERSION, '<' ) || version_compare( self::$version, PODS_DB_VERSION, '<=' ) || self::$upgrade_needed ) {

@@ -9,7 +9,7 @@ namespace {
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2018 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2018 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -95,6 +95,7 @@ namespace {
 	 * Returns the breadcrumbs for front-end display.
 	 *
 	 * @since 5.0.0
+	 * @since 5.1.4 Added the `title` attribute.
 	 * @link <https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/examples/breadcrumb/>
 	 *
 	 * @param array $atts The shortcode attributes.
@@ -105,19 +106,25 @@ namespace {
 		$atts = shortcode_atts(
 			[
 				'sep'   => '\203A',
-				'home'  => __( 'Home', 'default' ), /* defined in wp_page_menu() */
+				'home'  => __( 'Home', 'default' ), // defined in wp_page_menu()
 				'class' => 'tsf-breadcrumb',
+				'title' => null,
 			],
 			$atts,
 			'tsf_breadcrumb',
 		);
 
+		// Extract a valid class; it'll be of an escaped kind.
 		preg_match( '/-?[a-z_]+[a-z\d_-]*/i', $atts['class'], $matches );
 
 		$class = $matches[0] ?? 'tsf-breadcrumb';
 		$sep   = esc_html( $atts['sep'] );
 
-		$crumbs = \The_SEO_Framework\Meta\Breadcrumbs::get_breadcrumb_list();
+		$options = [
+			'use_meta_title' => isset( $atts['title'] ) ? 'meta' === $atts['title'] : null,
+		];
+
+		$crumbs = \The_SEO_Framework\Meta\Breadcrumbs::get_breadcrumb_list( null, $options );
 		$count  = count( $crumbs );
 		$items  = [];
 
@@ -165,7 +172,7 @@ namespace {
 					'list-style:none',
 					'margin-inline-start:0',
 				],
-				"nav.$class ol li"                         => [ // We could combine it the above; but this is easier for other devs.
+				"nav.$class ol li"                         => [ // We could combine with above; but this is easier for other devs.
 					'display:inline',
 				],
 				"nav.$class ol li:not(:last-child)::after" => [
@@ -238,7 +245,7 @@ namespace The_SEO_Framework {
 				\is_array( \THE_SEO_FRAMEWORK_HEADLESS )
 					and $is_headless = array_map(
 						'wp_validate_boolean',
-						array_merge( $is_headless, \THE_SEO_FRAMEWORK_HEADLESS )
+						array_merge( $is_headless, \THE_SEO_FRAMEWORK_HEADLESS ),
 					);
 			} else {
 				$is_headless = [
@@ -286,6 +293,8 @@ namespace The_SEO_Framework {
 	/**
 	 * Determines the type of request from the arguments.
 	 *
+	 * Hint: Use `tsf()->query()->is_static_front_page()` to determine if 'single' is the frontpage.
+	 *
 	 * @since 5.0.0
 	 *
 	 * @param array $args The query arguments. Expects indexes 'id', 'tax', 'pta', and 'uid'.
@@ -300,12 +309,12 @@ namespace The_SEO_Framework {
 			if ( $args['pta'] )
 				return 'pta';
 
-			return 'homeblog'; // home as page is 'single'!
+			return 'homeblog'; // "homeblog" isn't single, has no id, and is the frontpage.
 		} elseif ( $args['tax'] ) {
 			return 'term';
 		}
 
-		return 'single';
+		return 'single'; // page, post, product, frontpage, etc.
 	}
 
 	/**
@@ -364,8 +373,8 @@ namespace The_SEO_Framework {
 	 *     return $arg * 2;
 	 * }
 	 * function my_function( $arg ) {
-	 *    return memo( null, $arg );
-	 *        ?? memo( expensive_call( $arg ), $arg );
+	 *     return memo( null, $arg );
+	 *         ?? memo( expensive_call( $arg ), $arg );
 	 * }
 	 * my_function( 1 ); // prints "expensive 1!", returns 2.
 	 * my_function( 1 ); // returns 2.
@@ -386,24 +395,21 @@ namespace The_SEO_Framework {
 	 * @param mixed $value_to_set The value to set.
 	 * @param mixed ...$args      Extra arguments, that are used to differentiaty callbacks.
 	 *                            Arguments may not contain \Closure()s.
-	 * @return mixed : {
-	 *    mixed The cached value if set and $value_to_set is null.
-	 *       null When no value has been set.
-	 *       If $value_to_set is set, the new value.
-	 * }
+	 * @return mixed The cached value if $value_to_set is null.
+	 *               Otherwise, the $value_to_set.
 	 */
 	function memo( $value_to_set = null, ...$args ) {
 
 		static $memo = [];
 
-		// phpcs:ignore, WordPress.PHP.DiscouragedPHPFunctions -- No objects inserted, nor ever unserialized.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- No objects inserted, nor ever unserialized.
 		$hash = serialize(
 			[
 				'args' => $args,
 				'file' => 0,
 				'line' => 0,
 			]
-			// phpcs:ignore, WordPress.PHP.DevelopmentFunctions -- This is the only efficient way.
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions -- This is the only efficient way.
 			+ debug_backtrace( \DEBUG_BACKTRACE_IGNORE_ARGS, 2 )[1],
 		);
 
@@ -426,8 +432,8 @@ namespace The_SEO_Framework {
 	 *     return $arg * 2;
 	 * }
 	 * function my_function( $arg ) {
-	 *    return umemo( __METHOD__, null, $arg );
-	 *        ?? umemo( __METHOD__, expensive_call( $arg ), $arg );
+	 *     return umemo( __METHOD__, null, $arg );
+	 *         ?? umemo( __METHOD__, expensive_call( $arg ), $arg );
 	 * }
 	 * my_function( 1 ); // prints "expensive 1!", returns 2.
 	 * my_function( 1 ); // returns 2.
@@ -444,17 +450,14 @@ namespace The_SEO_Framework {
 	 * @param mixed  $value_to_set The value to set.
 	 * @param mixed  ...$args      Extra arguments, that are used to differentiate callbacks.
 	 *                             Arguments may not contain \Closure()s.
-	 * @return mixed : {
-	 *    mixed The cached value if set and $value_to_set is null.
-	 *       null When no value has been set.
-	 *       If $value_to_set is set, the new value.
-	 * }
+	 * @return mixed The cached value if $value_to_set is null.
+	 *               Otherwise, the $value_to_set.
 	 */
 	function umemo( $key, $value_to_set = null, ...$args ) {
 
 		static $memo = [];
 
-		// phpcs:ignore, WordPress.PHP.DiscouragedPHPFunctions -- No objects are inserted, nor is this ever unserialized.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- No objects are inserted, nor is this ever unserialized.
 		$hash = serialize( [ $key, $args ] );
 
 		if ( isset( $value_to_set ) )
@@ -491,33 +494,31 @@ namespace The_SEO_Framework {
 	 * @see umemo() -- sacrifices cleanliness for performance.
 	 * @ignore We couldn't find a use for this... yet. Probably once we support only PHP7.4+
 	 * @api
-	 * TODO Can we use callables as $fn? If so, adjust docs and apply internally.
+	 * TODO Can we use callables as $func? If so, adjust docs and apply internally.
 	 *
-	 * @param \Closure $fn The Closure or function to memoize.
-	 * @return mixed : {
-	 *    mixed The cached value if set and $value_to_set is null.
-	 *       null When no value has been set.
-	 *       If $value_to_set is set, the new value.
-	 * }
+	 * @param callable $func The Closure or function to memoize.
+	 *                       The Closure can only be cached properly if it's staticlaly stored.
+	 * @return mixed The cached value if $value_to_set is null.
+	 *               Otherwise, the $value_to_set.
 	 */
-	function fmemo( $fn ) {
+	function fmemo( $func ) {
 
 		static $memo = [];
 
-		// phpcs:ignore, WordPress.PHP.DiscouragedPHPFunctions -- This is never unserialized.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- This is never unserialized.
 		$hash = serialize(
 			[
 				'file' => '',
 				'line' => 0,
 			]
-			// phpcs:ignore, WordPress.PHP.DevelopmentFunctions -- This is the only efficient way.
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions -- This is the only efficient way.
 			+ debug_backtrace( 0, 2 )[1],
 		);
 
 		// Normally, I try to avoid NOTs for they add (tiny) overhead. Here, I chose readability over performance.
 		if ( ! isset( $memo[ $hash ] ) ) {
 			// Store the result of the function. If that's null/void, store hash.
-			$memo[ $hash ] = \call_user_func( $fn ) ?? $hash;
+			$memo[ $hash ] = \call_user_func( $func ) ?? $hash;
 		}
 
 		return $memo[ $hash ] === $hash ? null : $memo[ $hash ];

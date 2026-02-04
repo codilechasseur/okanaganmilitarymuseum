@@ -8,11 +8,11 @@ namespace The_SEO_Framework\Data\Filter;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Meta;
+use The_SEO_Framework\Meta;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -33,13 +33,13 @@ use \The_SEO_Framework\Meta;
  * @since 5.0.0
  * @access private
  */
-class Term {
+final class Term {
 
 	/**
 	 * @hook "sanitize_term_meta_ . THE_SEO_FRAMEWORK_TERM_OPTIONS" 10
 	 * @since 5.0.0
 	 *
-	 * @param mixed $meta_value An unsanitized value.
+	 * @param mixed[] $meta_value An unsanitized value.
 	 * @return array The sanitized term meta. An empty array on failure.
 	 */
 	public static function filter_meta_update( $meta_value ) {
@@ -90,7 +90,7 @@ class Term {
 					break;
 
 				default:
-					unset( $value[ $key ] );
+					unset( $meta_value[ $key ] );
 			}
 		}
 

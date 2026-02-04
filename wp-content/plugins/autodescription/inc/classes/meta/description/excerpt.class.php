@@ -8,12 +8,13 @@ namespace The_SEO_Framework\Meta\Description;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\{
+use function The_SEO_Framework\{
+	get_query_type_from_args,
 	memo,
 	normalize_generation_args,
 };
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Helper\Query,
 	Helper\Format,
@@ -21,7 +22,7 @@ use \The_SEO_Framework\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -48,16 +49,42 @@ class Excerpt {
 	/**
 	 * Returns a description excerpt.
 	 *
+	 * @since 5.1.0
+	 *
+	 * @param array|null $args The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+	 *                         Leave null to autodetermine query.
+	 * @return string The post, term, pta, or user excerpt.
+	 */
+	public static function get_excerpt( $args = null ) {
+		/**
+		 * @since 5.1.0
+		 * @param string     $excerpt The obtained excerpt.
+		 * @param array|null $args    The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
+		 *                            Leave null to autodetermine query.
+		 * @return string The post, term, pta, or user excerpt.
+		 */
+		return \apply_filters(
+			'the_seo_framework_get_excerpt',
+			isset( $args )
+				? self::get_excerpt_from_args( $args )
+				: self::get_excerpt_from_query(),
+			$args,
+		);
+	}
+
+	/**
+	 * Returns a description excerpt.
+	 *
 	 * @since 5.0.0
+	 * @alias
+	 * @todo deprecate 5.2: use get_excerpt() instead.
 	 *
 	 * @param array|null $args The query arguments. Accepts 'id', 'tax', 'pta', and 'uid'.
 	 *                         Leave null to autodetermine query.
 	 * @return string
 	 */
 	public static function get_post_excerpt( $args = null ) {
-		return isset( $args )
-			? static::get_excerpt_from_args( $args )
-			: static::get_excerpt_from_query();
+		return self::get_excerpt( $args );
 	}
 
 	/**
@@ -69,17 +96,15 @@ class Excerpt {
 	 */
 	public static function get_excerpt_from_query() {
 
-		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- I know.
 		if ( null !== $memo = memo() ) return $memo;
 
-		if ( Query::is_static_front_page() ) {
-			$excerpt = static::get_singular_excerpt();
-		} elseif ( Query::is_blog_as_page() ) {
-			$excerpt = static::get_blog_page_excerpt();
+		if ( Query::is_blog_as_page() ) {
+			$excerpt = self::get_blog_page_excerpt();
 		} elseif ( Query::is_singular() ) {
-			$excerpt = static::get_singular_excerpt();
+			$excerpt = self::get_singular_excerpt();
 		} elseif ( Query::is_archive() ) {
-			$excerpt = static::get_archive_excerpt();
+			$excerpt = self::get_archive_excerpt();
 		}
 
 		return memo( $excerpt ?? '' ?: '' );
@@ -97,16 +122,25 @@ class Excerpt {
 
 		normalize_generation_args( $args );
 
-		if ( $args['tax'] ) {
-			$excerpt = static::get_archive_excerpt( \get_term( $args['id'], $args['tax'] ) );
-		} elseif ( $args['pta'] ) {
-			$excerpt = static::get_archive_excerpt( \get_post_type_object( $args['pta'] ) );
-		} elseif ( $args['uid'] ) {
-			$excerpt = static::get_archive_excerpt( \get_userdata( $args['uid'] ) );
-		} elseif ( Query::is_blog_as_page( $args['id'] ) ) {
-			$excerpt = static::get_blog_page_excerpt();
-		} elseif ( $args['id'] ) {
-			$excerpt = static::get_singular_excerpt( $args['id'] );
+		switch ( get_query_type_from_args( $args ) ) {
+			case 'single':
+				if ( Query::is_blog_as_page( $args['id'] ) ) {
+					$excerpt = self::get_blog_page_excerpt();
+				} else {
+					$excerpt = self::get_singular_excerpt( $args['id'] );
+				}
+				break;
+			case 'term':
+				$excerpt = self::get_archive_excerpt( \get_term( $args['id'], $args['tax'] ) );
+				break;
+			case 'homeblog':
+				$excerpt = self::get_blog_page_excerpt();
+				break;
+			case 'pta':
+				$excerpt = self::get_archive_excerpt( \get_post_type_object( $args['pta'] ) );
+				break;
+			case 'user':
+				$excerpt = self::get_archive_excerpt( Data\User::get_userdata( $args['uid'] ) );
 		}
 
 		return $excerpt ?? '';
@@ -120,7 +154,7 @@ class Excerpt {
 	 * @return string
 	 */
 	private static function get_blog_page_excerpt() {
-		return sprintf(
+		return \sprintf(
 			/* translators: %s = Blog page title. Front-end output. */
 			\__( 'Latest posts: %s', 'autodescription' ),
 			Data\Blog::get_public_blog_name(),
@@ -149,15 +183,17 @@ class Excerpt {
 
 		/**
 		 * @since 3.1.0
+		 * @since 5.1.0 Deprecated.
+		 * @deprecated
 		 * @see `\tsf()->format()->html()->extract_content()` to strip HTML tags neatly.
 		 * @param string                 $excerpt The short circuit excerpt.
 		 * @param \WP_Term|\WP_Post_Type $object  The Term object or post type object.
-		 * @todo deprecate and move to main fetcher.
 		 */
-		$excerpt = (string) \apply_filters(
+		$excerpt = (string) \apply_filters_deprecated(
 			'the_seo_framework_generated_archive_excerpt',
-			'',
-			$object,
+			[ '', $object ],
+			'5.1.0 of The SEO Framework',
+			'the_seo_framework_get_excerpt',
 		);
 
 		if ( $excerpt ) return $excerpt;
@@ -165,7 +201,7 @@ class Excerpt {
 		if ( $in_the_loop ) {
 			if ( Query::is_category() || Query::is_tag() || Query::is_tax() ) {
 				// WordPress DOES NOT allow HTML in term descriptions, not even if you're a super-administrator.
-				// See https://wpvulndb.com/vulnerabilities/9445. We won't parse HTMl tags unless WordPress adds native support.
+				// See https://wpscan.com/vulnerability/8bc4cf95-79f7-4d92-b320-a841ab7e6a6f/. We won't parse HTML tags unless WordPress adds native support.
 				$excerpt = $object->description ?? '';
 			} elseif ( Query::is_author() ) {
 				$excerpt = Format\HTML::extract_content( \get_the_author_meta(
@@ -176,27 +212,34 @@ class Excerpt {
 				/**
 				 * @since 4.0.6
 				 * @since 4.2.0 Now provides the post type object description, if assigned.
+				 * @since 5.1.0 Deprecated.
+				 * @deprecated
 				 * @param string $excerpt The archive description excerpt.
 				 * @param \WP_Term|\WP_Post_Type $object The post type object.
-				 * @todo deprecate and move to main fetcher.
 				 */
-				$excerpt = (string) \apply_filters(
+				$excerpt = (string) \apply_filters_deprecated(
 					'the_seo_framework_pta_description_excerpt',
-					$object->description ?? '',
-					$object,
+					[
+						$object->description ?? '',
+						$object,
+					],
+					'5.1.0 of The SEO Framework',
+					'the_seo_framework_get_excerpt',
 				);
 			} else {
 				/**
 				 * @since 4.0.6
 				 * @since 4.1.0 Added the $object object parameter.
+				 * @since 5.1.0 Deprecated.
+				 * @deprecated
 				 * @param string $excerpt The fallback archive description excerpt.
 				 * @param \WP_Term $object    The Term object.
-				 * @todo deprecate and move to main fetcher.
 				 */
-				$excerpt = (string) \apply_filters(
+				$excerpt = (string) \apply_filters_deprecated(
 					'the_seo_framework_fallback_archive_description_excerpt',
-					'',
-					$object,
+					[ '', $object ],
+					'5.1.0 of The SEO Framework',
+					'the_seo_framework_get_excerpt',
 				);
 			}
 		} else {

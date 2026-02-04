@@ -8,14 +8,14 @@ namespace The_SEO_Framework;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Helper\{
+use The_SEO_Framework\Helper\{
 	Headers,
 	Query,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -30,7 +30,14 @@ use \The_SEO_Framework\Helper\{
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// This is not necessarily a WordPress query. Test it inline.
+// Load the plugin's text domain first.
+\load_plugin_textdomain(
+	'autodescription',
+	false,
+	\dirname( \THE_SEO_FRAMEWORK_PLUGIN_BASENAME ) . \DIRECTORY_SEPARATOR . 'language',
+);
+
+// Output noindex headers when an XMLRPC request is detected. There are no hooks, test inline.
 if ( \defined( 'XMLRPC_REQUEST' ) && \XMLRPC_REQUEST )
 	Headers::output_robots_noindex_headers();
 

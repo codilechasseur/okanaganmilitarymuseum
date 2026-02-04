@@ -8,9 +8,9 @@ namespace The_SEO_Framework\Meta\Schema\Entities;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\normalize_generation_args;
+use function The_SEO_Framework\normalize_generation_args;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Meta,
 	Data,
 	Helper\Query,
@@ -19,7 +19,7 @@ use \The_SEO_Framework\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -104,13 +104,13 @@ final class Author extends Reference {
 
 		if ( empty( $author_id ) ) return null;
 
-		$user_data = \get_userdata( $author_id );
+		$user_data = Data\User::get_userdata( $author_id );
 		$user_meta = Data\Plugin\User::get_meta( $author_id );
 
 		$entity = [
 			'@type' => static::$type,
 			'@id'   => static::get_id( [ 'uid' => $author_id ] ),
-			'name'  => $user_data->display_name ?? '',
+			'name'  => $user_data->display_name ?? '', // Yes, this could lead to an empty Author entity in a corner case.
 			// Let's not; may invoke bad bots. Let's do this via sameas.
 			// 'url'   => Meta\URI::get_bare_author_url( $author_id ),
 		];
@@ -124,7 +124,7 @@ final class Author extends Reference {
 			$entity['description'] = Strings::clamp_sentence(
 				\wp_strip_all_tags( $user_data->description ),
 				1,
-				250,
+				250, // Magic number: https://developer.yoast.com/features/schema/pieces/person/#optional-properties.
 			);
 
 		return $entity;

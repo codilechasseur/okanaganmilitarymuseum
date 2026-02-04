@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Sitemap\WP;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Sitemap,
 	Helper\Format\Time,
@@ -16,7 +16,7 @@ use \The_SEO_Framework\{
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2020 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2020 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -142,7 +142,7 @@ class Posts extends \WP_Sitemaps_Posts {
 						$latests_posts[0]->post_date_gmt ?? '0000-00-00 00:00:00',
 					);
 
-					if ( isset( $lastmod ) && '0000-00-00 00:00:00' !== $lastmod ) {
+					if ( '0000-00-00 00:00:00' !== $lastmod ) {
 						// XML safe.
 						$sitemap_entry['lastmod'] = Time::convert_to_preferred_format( $lastmod );
 					}
@@ -175,9 +175,9 @@ class Posts extends \WP_Sitemaps_Posts {
 			 * @augmented Adds lastmod to sitemap entry.
 			 */
 			if ( $show_modified ) {
-				$lastmod = $post->post_modified_gmt ?? null;
+				$lastmod = $post->post_modified_gmt ?? '0000-00-00 00:00:00';
 
-				if ( isset( $lastmod ) && '0000-00-00 00:00:00' !== $lastmod ) {
+				if ( '0000-00-00 00:00:00' !== $lastmod ) {
 					// XML safe.
 					$sitemap_entry['lastmod'] = Time::convert_to_preferred_format( $lastmod );
 				}

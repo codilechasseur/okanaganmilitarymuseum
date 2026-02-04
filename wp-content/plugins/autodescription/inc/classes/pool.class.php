@@ -8,11 +8,11 @@ namespace The_SEO_Framework;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\Traits\Internal\Static_Deprecator;
+use The_SEO_Framework\Traits\Internal\Static_Deprecator;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -39,6 +39,7 @@ use \The_SEO_Framework\Traits\Internal\Static_Deprecator;
  *        Instead, use tsf()->admin()->layout()->make_single_select_form();
  *        Failing to do so might result in a crash when we need to deprecate a call,
  *        defeating the purpose of the static deprecator.
+ * @NOTE: All static:: calls within this class are intentional, to allow overrides in deprecators.
  *
  * @todo: If the subobjects require complex fallbacks, put them in a new \Internal
  *        subobject. Create private class constant to hold that class location.
@@ -55,10 +56,10 @@ class Pool extends Legacy_API {
 	 */
 	private static $pool = [];
 
-	// phpcs:disable, Squiz.Commenting.VariableComment.Missing -- see trait Static_Deprecator.
+	// phpcs:disable Squiz.Commenting.VariableComment.Missing -- see trait Static_Deprecator.
 
 	/**
-	 * Returns a pool of Layout classes as instantiated object with deprecation capabilities.
+	 * Returns a pool of Admin classes as instantiated object with deprecation capabilities.
 	 * This allows for easy API access, and it allows us to silence fatal errors.
 	 *
 	 * @since 5.0.0
@@ -67,8 +68,12 @@ class Pool extends Legacy_API {
 	 * @return \Closure An anononymous class with subpools.
 	 */
 	public static function admin() {
-		return static::$pool['layout'] ??= new class {
+		return static::$pool['admin'] ??= new class {
 			use Static_Deprecator;
+
+			private $colloquial_handle     = 'tsf()->admin()';
+			private $deprecated_methods    = [];
+			private $deprecated_properties = [];
 
 			/**
 			 * @since 5.0.0
@@ -77,6 +82,10 @@ class Pool extends Legacy_API {
 			public static function layout() {
 				return static::$subpool['layout'] ??= new class {
 					use Static_Deprecator;
+
+					private $colloquial_handle     = 'tsf()->admin()->layout()';
+					private $deprecated_methods    = [];
+					private $deprecated_properties = [];
 
 					/**
 					 * @since 5.0.0
@@ -257,20 +266,6 @@ class Pool extends Legacy_API {
 
 					/**
 					 * @since 5.0.0
-					 * @return \The_SEO_Framework\Data\Plugin\Home
-					 */
-					public static function home() {
-						return static::$subpool['home'] ??= new class extends Data\Plugin\Home {
-							use Static_Deprecator;
-
-							private $colloquial_handle     = 'tsf()->data()->plugin()->home()';
-							private $deprecated_methods    = [];
-							private $deprecated_properties = [];
-						};
-					}
-
-					/**
-					 * @since 5.0.0
 					 * @return \The_SEO_Framework\Data\Plugin\Post
 					 */
 					public static function post() {
@@ -431,7 +426,7 @@ class Pool extends Legacy_API {
 		return static::$pool['escape'] ??= new class extends Data\Filter\Escape {
 			use Static_Deprecator;
 
-			private $colloquial_handle     = 'tsf()->filter()->escape()';
+			private $colloquial_handle     = 'tsf()->escape()';
 			private $deprecated_methods    = [];
 			private $deprecated_properties = [];
 		};
@@ -808,7 +803,7 @@ class Pool extends Legacy_API {
 		return static::$pool['sanitize'] ??= new class extends Data\Filter\Sanitize {
 			use Static_Deprecator;
 
-			private $colloquial_handle     = 'tsf()->filter()->sanitize()';
+			private $colloquial_handle     = 'tsf()->sanitize()';
 			private $deprecated_methods    = [];
 			private $deprecated_properties = [];
 		};
@@ -833,17 +828,18 @@ class Pool extends Legacy_API {
 
 			/**
 			 * @since 5.0.0
+			 * @since 5.1.0 Now actually lists the existing class names.
 			 * @readonly
 			 * @var array[string,string] A list of accessible entity class names.
 			 */
 			public $entities = [
-				'Author'         => Meta\Schema\Author::class,
-				'BreadcrumbList' => Meta\Schema\BreadcrumbList::class,
-				'Organization'   => Meta\Schema\Organization::class,
-				'Person'         => Meta\Schema\Person::class,
-				'Reference'      => Meta\Schema\Reference::class,
-				'WebPage'        => Meta\Schema\WebPage::class,
-				'WebSite'        => Meta\Schema\WebSite::class,
+				'Author'         => Meta\Schema\Entities\Author::class,
+				'BreadcrumbList' => Meta\Schema\Entities\BreadcrumbList::class,
+				'Organization'   => Meta\Schema\Entities\Organization::class,
+				'Person'         => Meta\Schema\Entities\Person::class,
+				'Reference'      => Meta\Schema\Entities\Reference::class,
+				'WebPage'        => Meta\Schema\Entities\WebPage::class,
+				'WebSite'        => Meta\Schema\Entities\WebSite::class,
 			];
 		};
 	}

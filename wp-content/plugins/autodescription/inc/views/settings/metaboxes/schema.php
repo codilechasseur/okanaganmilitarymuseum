@@ -6,20 +6,23 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) or die;
+( \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and Helper\Template::verify_secret( $secret ) ) or die;
 
-use \The_SEO_Framework\Admin\Settings\Layout\{
+use The_SEO_Framework\Admin\Settings\Layout\{
 	Form,
 	HTML,
 	Input,
 };
-use \The_SEO_Framework\Helper\Compatibility;
+use The_SEO_Framework\Helper\{
+	Compatibility,
+	Format\Markdown,
+};
 
-// phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2016 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2016 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -49,15 +52,20 @@ switch ( $instance ) :
 		HTML::description( \__( 'This is also known as the "Knowledge Graph" and "Structured Data", which is under heavy active development by several search engines. Therefore, the usage of the outputted markup is not guaranteed.', 'autodescription' ) );
 
 		$tabs = [
-			'general'  => [
+			'general'     => [
 				'name'     => \__( 'General', 'autodescription' ),
 				'callback' => [ Admin\Settings\Plugin::class, '_schema_metabox_general_tab' ],
 				'dashicon' => 'admin-generic',
 			],
-			'presence' => [
+			'presence'    => [
 				'name'     => \__( 'Presence', 'autodescription' ),
 				'callback' => [ Admin\Settings\Plugin::class, '_schema_metabox_presence_tab' ],
 				'dashicon' => 'networking',
+			],
+			'breadcrumbs' => [
+				'name'     => \__( 'Breadcrumbs', 'autodescription' ),
+				'callback' => [ Admin\Settings\Plugin::class, '_schema_metabox_breadcrumbs_tab' ],
+				'dashicon' => 'ellipsis',
 			],
 		];
 
@@ -68,7 +76,7 @@ switch ( $instance ) :
 			 * @since 5.0.0 Removed the 'structure' index and added the 'general' index.
 			 * @param array $defaults The default tabs.
 			 */
-			(array) \apply_filters( 'the_seo_framework_schema_settings_tabs', $tabs )
+			(array) \apply_filters( 'the_seo_framework_schema_settings_tabs', $tabs ),
 		);
 		break;
 
@@ -171,7 +179,7 @@ switch ( $instance ) :
 			</label>
 		</p>
 		<p>
-			<input type=text name="<?php Input::field_name( 'knowledge_name' ); ?>" class=large-text id="<?php Input::field_id( 'knowledge_name' ); ?>" placeholder="<?= \esc_attr( Data\Blog::get_public_blog_name() ) ?>" value="<?= \esc_attr( Data\Plugin::get_option( 'knowledge_name' ) ) ?>" autocomplete=off />
+			<input type=text name="<?php Input::field_name( 'knowledge_name' ); ?>" class=large-text id="<?php Input::field_id( 'knowledge_name' ); ?>" placeholder="<?= \esc_attr( Data\Blog::get_public_blog_name() ) ?>" value="<?= \esc_attr( Data\Plugin::get_option( 'knowledge_name' ) ) ?>" autocomplete=off>
 		</p>
 		<div id=tsf-logo-structured-data-settings-wrapper>
 			<hr>
@@ -199,12 +207,12 @@ switch ( $instance ) :
 					</label>
 				</p>
 				<p>
-					<input class=large-text type=url name="<?php Input::field_name( 'knowledge_logo_url' ); ?>" id=knowledge_logo-url placeholder="<?= \esc_url( $logo_placeholder ) ?>" value="<?= \esc_url( Data\Plugin::get_option( 'knowledge_logo_url' ) ) ?>" />
-					<input type=hidden name="<?php Input::field_name( 'knowledge_logo_id' ); ?>" id=knowledge_logo-id value="<?= \absint( Data\Plugin::get_option( 'knowledge_logo_id' ) ) ?>" />
+					<input class=large-text type=url name="<?php Input::field_name( 'knowledge_logo_url' ); ?>" id=knowledge_logo-url placeholder="<?= \esc_url( $logo_placeholder ) ?>" value="<?= \esc_url( Data\Plugin::get_option( 'knowledge_logo_url' ) ) ?>">
+					<input type=hidden name="<?php Input::field_name( 'knowledge_logo_id' ); ?>" id=knowledge_logo-id value="<?= \absint( Data\Plugin::get_option( 'knowledge_logo_id' ) ) ?>">
 				</p>
 				<p class=hide-if-no-tsf-js>
 					<?php
-					// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
+					// phpcs:disable WordPress.Security.EscapeOutput -- already escaped.
 					echo Form::get_image_uploader_form( [
 						'id'   => 'knowledge_logo',
 						'data' => [
@@ -220,6 +228,7 @@ switch ( $instance ) :
 							'button_text'  => \__( 'Select Logo', 'autodescription' ),
 						],
 					] );
+					// phpcs:enable WordPress.Security.EscapeOutput
 					?>
 				</p>
 			</div>
@@ -241,9 +250,9 @@ switch ( $instance ) :
 			'twitter'    => [
 				'option'      => 'knowledge_twitter',
 				'dashicon'    => 'dashicons-twitter',
-				'desc'        => \__( 'Twitter Profile', 'autodescription' ),
-				'placeholder' => "https://twitter.com/$connectedi18n",
-				'examplelink' => 'https://twitter.com/home', // No example link available.
+				'desc'        => \__( 'X Profile', 'autodescription' ),
+				'placeholder' => "https://x.com/$connectedi18n",
+				'examplelink' => 'https://x.com/home', // No example link available.
 			],
 			'instagram'  => [
 				'option'      => 'knowledge_instagram',
@@ -263,11 +272,7 @@ switch ( $instance ) :
 				'option'      => 'knowledge_linkedin',
 				'dashicon'    => 'genericon-linkedin-alt',
 				'desc'        => \__( 'LinkedIn Profile', 'autodescription' ),
-				/**
-				 * TODO switch to /in/ insteadof /company/ when knowledge-type is personal?
-				 * Note that this feature is DEPRECATED. https://developers.google.com/search/docs/data-types/social-profile
-				 */
-				'placeholder' => "https://www.linkedin.com/company/$connectedi18n/",
+				'placeholder' => "https://www.linkedin.com/in/$connectedi18n/",
 				'examplelink' => 'https://www.linkedin.com/profile/view',
 			],
 			'pinterest'  => [
@@ -317,8 +322,33 @@ switch ( $instance ) :
 				</label>
 			</p>
 			<p>
-				<input type=url name="<?php Input::field_name( $sc['option'] ); ?>" class=large-text id="<?php Input::field_id( $sc['option'] ); ?>" placeholder="<?= \esc_attr( $sc['placeholder'] ) ?>" value="<?= \esc_attr( Data\Plugin::get_option( $sc['option'] ) ) ?>" autocomplete=off />
+				<input type=url name="<?php Input::field_name( $sc['option'] ); ?>" class=large-text id="<?php Input::field_id( $sc['option'] ); ?>" placeholder="<?= \esc_attr( $sc['placeholder'] ) ?>" value="<?= \esc_attr( Data\Plugin::get_option( $sc['option'] ) ) ?>" autocomplete=off>
 			</p>
 			<?php
 		}
+		break;
+
+	case 'breadcrumbs':
+		HTML::header_title( \__( 'Breadcrumbs Output Settings', 'autodescription' ) );
+
+		HTML::wrap_fields(
+			Input::make_checkbox( [
+				'id'          => 'breadcrumb_use_meta_title',
+				'label'       => \esc_html__( 'Use meta titles for breadcrumbs?', 'autodescription' ),
+				'description' => \esc_html__( 'Meta titles are the custom SEO titles inputted via the SEO settings. If disabled, page titles from the editor will be used.', 'autodescription' ),
+			] ),
+			true,
+		);
+
+		HTML::description_noesc(
+			Markdown::convert(
+				\sprintf(
+					/* translators: %s = Documentation URL in Markdown */
+					\esc_html__( 'You can also use a shortcode to output breadcrumbs. [Learn more](%s).', 'autodescription' ),
+					'https://kb.theseoframework.com/?p=212',
+				),
+				[ 'a' ],
+				[ 'a_internal' => false ],
+			),
+		);
 endswitch;

@@ -8,17 +8,18 @@ namespace The_SEO_Framework\Data\Plugin;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use function \The_SEO_Framework\is_headless;
+use function The_SEO_Framework\is_headless;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Data,
 	Helper\Post_Type,
 	Helper\Query,
+	Traits\Property_Refresher,
 };
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2023 - 2024 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2023 - 2025 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -37,10 +38,14 @@ use \The_SEO_Framework\{
  * Holds a collection of Post data interface methods for TSF.
  *
  * @since 5.0.0
+ * @since 5.1.0 Added the Property_Refresher trait.
  * @access protected
- *         Use tsf()->data()->plugin->post() instead.
+ *         Use tsf()->data()->plugin()->post() instead.
+ *
+ * @NOTE: All static:: calls within this class are intentional due to Property_Refresher trait.
  */
 class Post {
+	use Property_Refresher;
 
 	/**
 	 * @since 5.0.0
@@ -95,6 +100,7 @@ class Post {
 	 * @since 5.0.0 1. Removed the third `$use_cache` parameter.
 	 *              2. Moved from `\The_SEO_Framework\Load`.
 	 *              3. Renamed from `get_post_meta`.
+	 * @since 5.1.0 Now returns the default meta if the post type isn't supported.
 	 *
 	 * @param int $post_id The post ID.
 	 * @return array The post meta.
@@ -106,9 +112,12 @@ class Post {
 		if ( isset( static::$meta_memo[ $post_id ] ) )
 			return static::$meta_memo[ $post_id ];
 
+		// Code smell: the empty test is for performance since the memo can be bypassed by input vars.
+		empty( static::$meta_memo ) and static::register_automated_refresh( 'meta_memo' );
+
 		// We test post type support for "post_query"-queries might get past this point.
-		if ( empty( $post_id ) || ! Post_Type::is_supported( \get_post( $post_id )->post_type ) )
-			return static::$meta_memo[ $post_id ] = [];
+		if ( empty( $post_id ) || ! Post_Type::is_supported( \get_post( $post_id )->post_type ?? '' ) )
+			return static::$meta_memo[ $post_id ] = static::get_default_meta( $post_id );
 
 		// Keep lucky first when exceeding nice numbers. This way, we won't overload memory in memoization.
 		if ( \count( static::$meta_memo ) > 69 )
@@ -129,6 +138,7 @@ class Post {
 			);
 
 			// WP converts all entries to arrays, because we got ALL entries. Disarray!
+			// We cannot use array_column() because we need to preserve the keys.
 			foreach ( $meta as &$value )
 				$value = $value[0];
 		}
@@ -136,7 +146,7 @@ class Post {
 		/**
 		 * @since 4.0.5
 		 * @since 4.1.4 1. Now considers headlessness.
-		 *              2. Now returns a 3rd parameter: boolean $headless.
+		 *              2. Now returns a 3rd parameter: Boolean $headless.
 		 * @note Do not delete/unset/add indexes! It'll cause errors.
 		 * @param array $meta    The current post meta.
 		 * @param int   $post_id The post ID.
@@ -169,8 +179,8 @@ class Post {
 		 * @since 4.1.4
 		 * @since 4.2.0 1. Now corrects the $post_id when none is supplied.
 		 *              2. No longer returns the third parameter.
-		 * @param array    $defaults
-		 * @param integer  $post_id Post ID.
+		 * @param array $defaults The default post meta.
+		 * @param int   $post_id  Post ID.
 		 * @param \WP_Post $post    Post object.
 		 */
 		return (array) \apply_filters(
@@ -180,14 +190,14 @@ class Post {
 				'_tsf_title_no_blogname'  => 0, // The prefix I should've used from the start...
 				'_genesis_description'    => '',
 				'_genesis_canonical_uri'  => '',
-				'redirect'                => '', //! Will be displayed in custom fields when set...
+				'redirect'                => '', // FIXME: Will be displayed in custom fields when set...
 				'_social_image_url'       => '',
 				'_social_image_id'        => 0,
 				'_genesis_noindex'        => 0,
 				'_genesis_nofollow'       => 0,
 				'_genesis_noarchive'      => 0,
-				'exclude_local_search'    => 0, //! Will be displayed in custom fields when set...
-				'exclude_from_archive'    => 0, //! Will be displayed in custom fields when set...
+				'exclude_local_search'    => 0, // FIXME: Will be displayed in custom fields when set...
+				'exclude_from_archive'    => 0, // FIXME: Will be displayed in custom fields when set...
 				'_open_graph_title'       => '',
 				'_open_graph_description' => '',
 				'_twitter_title'          => '',
@@ -208,9 +218,9 @@ class Post {
 	 * @since 5.0.0 1. Moved from `\The_SEO_Framework\Load`.
 	 *              2. Renamed from `update_single_post_meta_item`.
 	 *
-	 * @param string  $item    The item to update.
-	 * @param mixed   $value   The value the item should be at.
-	 * @param integer $post_id The post ID. Also accepts Post objects.
+	 * @param string       $item    The item to update.
+	 * @param mixed        $value   The value the item should be at.
+	 * @param int|\WP_Post $post_id The post ID. Also accepts Post objects.
 	 */
 	public static function update_single_meta_item( $item, $value, $post_id ) {
 
@@ -232,8 +242,8 @@ class Post {
 	 * @since 5.0.0 1. Moved from `\The_SEO_Framework\Load`.
 	 *              2. Renamed from `save_post_meta`.
 	 *
-	 * @param integer $post_id The post ID. Also accepts Post objects.
-	 * @param array   $data    The post meta fields, will be merged with the defaults.
+	 * @param int|\WP_Post $post_id The post ID. Also accepts Post objects.
+	 * @param array        $data    The post meta fields, will be merged with the defaults.
 	 */
 	public static function save_meta( $post_id, $data ) {
 
@@ -295,6 +305,7 @@ class Post {
 	 *              3. Now considers headlessness.
 	 *              4. Moved from `\The_SEO_Framework\Load`.
 	 * @since 5.0.2 Now selects the last child of a primary term if its parent has the lowest ID.
+	 * @since 5.1.0 Now returns a valid primary term if the selected one is gone.
 	 *
 	 * @param int    $post_id  The post ID.
 	 * @param string $taxonomy The taxonomy name.
@@ -304,6 +315,9 @@ class Post {
 
 		if ( isset( static::$pt_memo[ $post_id ][ $taxonomy ] ) )
 			return static::$pt_memo[ $post_id ][ $taxonomy ] ?: null;
+
+		// Code smell: the empty test is for performance since the memo can be bypassed by input vars.
+		empty( static::$pt_memo ) and static::register_automated_refresh( 'pt_memo' );
 
 		// Keep lucky first when exceeding nice numbers. This way, we won't overload memory in memoization.
 		if ( \count( static::$pt_memo ) > 69 )
@@ -334,7 +348,11 @@ class Post {
 						break;
 					}
 				}
-			} else {
+			}
+
+			if ( ! $primary_term ) {
+				// No primary term has been assigned, or the primary term was deleted or altered. We need to find a new one.
+
 				$term_ids = array_column( $terms, 'term_id' );
 				asort( $term_ids );
 				$primary_term = $terms[ array_key_first( $term_ids ) ] ?? null;

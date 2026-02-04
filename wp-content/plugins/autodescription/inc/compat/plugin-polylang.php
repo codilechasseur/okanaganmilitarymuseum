@@ -2,30 +2,32 @@
 /**
  * @package The_SEO_Framework\Compat\Plugin\PolyLang
  * @subpackage The_SEO_Framework\Compatibility
+ * @access private
  */
 
 namespace The_SEO_Framework;
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
 
-use \The_SEO_Framework\{
+use The_SEO_Framework\{
 	Helper\Query,
 	Meta\URI,
 };
 
-\add_action( 'the_seo_framework_sitemap_header', __NAMESPACE__ . '\\_polylang_set_sitemap_language' );
-\add_filter( 'the_seo_framework_sitemap_endpoint_list', __NAMESPACE__ . '\\_polylang_register_sitemap_languages', 20 );
-\add_filter( 'the_seo_framework_sitemap_hpt_query_args', __NAMESPACE__ . '\\_polylang_sitemap_append_non_translatables' );
-\add_filter( 'the_seo_framework_sitemap_nhpt_query_args', __NAMESPACE__ . '\\_polylang_sitemap_append_non_translatables' );
-\add_filter( 'the_seo_framework_title_from_custom_field', __NAMESPACE__ . '\\pll__' );
-\add_filter( 'the_seo_framework_title_from_generation', __NAMESPACE__ . '\\pll__' );
-\add_filter( 'the_seo_framework_generated_description', __NAMESPACE__ . '\\pll__' );
-\add_filter( 'the_seo_framework_custom_field_description', __NAMESPACE__ . '\\pll__' );
-\add_filter( 'the_seo_framework_front_init', __NAMESPACE__ . '\\_hijack_polylang_home_url' );
-\add_filter( 'pll_home_url_white_list', __NAMESPACE__ . '\\_polylang_allow_tsf_home_url' );
-\add_filter( 'pll_home_url_allow_list', __NAMESPACE__ . '\\_polylang_allow_tsf_home_url' );
-\add_action( 'the_seo_framework_cleared_sitemap_transients', __NAMESPACE__ . '\\_polylang_flush_sitemap' );
-\add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\_defunct_badly_coded_polylang_script', 11 );
+\add_action( 'the_seo_framework_sitemap_header', __NAMESPACE__ . '\_polylang_set_sitemap_language' );
+\add_filter( 'the_seo_framework_sitemap_endpoint_list', __NAMESPACE__ . '\_polylang_register_sitemap_languages', 20 );
+\add_filter( 'the_seo_framework_sitemap_hpt_query_args', __NAMESPACE__ . '\_polylang_sitemap_append_non_translatables' );
+\add_filter( 'the_seo_framework_sitemap_nhpt_query_args', __NAMESPACE__ . '\_polylang_sitemap_append_non_translatables' );
+\add_filter( 'the_seo_framework_title_from_custom_field', __NAMESPACE__ . '\pll__' );
+\add_filter( 'the_seo_framework_title_from_generation', __NAMESPACE__ . '\pll__' );
+\add_filter( 'the_seo_framework_custom_field_description', __NAMESPACE__ . '\pll__' );
+\add_filter( 'the_seo_framework_generated_description', __NAMESPACE__ . '\pll__' );
+\add_filter( 'the_seo_framework_front_init', __NAMESPACE__ . '\_hijack_polylang_home_url' );
+\add_filter( 'pll_home_url_white_list', __NAMESPACE__ . '\_polylang_allow_tsf_home_url' );
+\add_filter( 'pll_home_url_allow_list', __NAMESPACE__ . '\_polylang_allow_tsf_home_url' );
+\add_action( 'the_seo_framework_cleared_sitemap_transients', __NAMESPACE__ . '\_polylang_flush_sitemap' );
+\add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\_defunct_badly_coded_polylang_script', 11 );
+\add_filter( 'the_seo_framework_seo_column_keys_order', __NAMESPACE__ . '\_polylang_seo_column_keys_order' );
 
 /**
  * Registeres more sitemaps for the robots.txt to parse.
@@ -35,17 +37,17 @@ use \The_SEO_Framework\{
  *
  * @hook the_seo_framework_sitemap_endpoint_list 20
  * @since 5.0.5
- * @param array[] $list The endpoints: {
- *   'id' => array: {
- *      'lock_id'  => string|false Optional. The cache key to use for locking. Defaults to index 'id'.
- *                                           Set to false to disable locking.
- *      'cache_id' => string|false Optional. The cache key to use for storing. Defaults to index 'id'.
- *                                           Set to false to disable caching.
- *      'endpoint' => string       The expected "pretty" endpoint, meant for administrative display.
- *      'epregex'  => string       The endpoint regex, following the home path regex.
- *      'callback' => callable     The callback for the sitemap output.
- *      'robots'   => bool         Whether the endpoint should be mentioned in the robots.txt file.
- *   }
+ * @param array[] $list {
+ *     A list of sitemap endpoints keyed by ID.
+ *
+ *     @type string|false $lock_id  Optional. The cache key to use for locking. Defaults to index 'id'.
+ *                                  Set to false to disable locking.
+ *     @type string|false $cache_id Optional. The cache key to use for storing. Defaults to index 'id'.
+ *                                  Set to false to disable caching.
+ *     @type string       $endpoint The expected "pretty" endpoint, meant for administrative display.
+ *     @type string       $epregex  The endpoint regex, following the home path regex.
+ *     @type callable     $callback The callback for the sitemap output.
+ *     @type bool         $robots   Whether the endpoint should be mentioned in the robots.txt file.
  * }
  * @return array[]
  */
@@ -64,7 +66,7 @@ function _polylang_register_sitemap_languages( $list ) {
 	// Do most work outside of a loop. We have two loops because of this.
 	// We fall back to -1 because null/false match with '0'
 	switch ( \get_option( 'polylang' )['force_lang'] ?? -1 ) {
-		case 0:
+		case 0: // The language is set from content.
 			foreach (
 				array_diff(
 					\pll_languages_list( [ 'hide_empty' => 1 ] ),
@@ -80,7 +82,7 @@ function _polylang_register_sitemap_languages( $list ) {
 				] + $list['base'];
 			}
 			break;
-		case 1:
+		case 1: // The language is set from the directory name in pretty permalinks.
 			foreach (
 				array_diff(
 					\pll_languages_list( [ 'hide_empty' => 1 ] ),
@@ -106,13 +108,12 @@ function _polylang_register_sitemap_languages( $list ) {
  *
  * @hook the_seo_framework_sitemap_header 10
  * @since 4.1.2
- * @access private
  */
 function _polylang_set_sitemap_language() {
 
 	if ( ! \function_exists( 'PLL' ) || ! ( \PLL() instanceof \PLL_Frontend ) ) return;
 
-	// phpcs:ignore, WordPress.Security.NonceVerification.Recommended -- Arbitrary input expected.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Arbitrary input expected.
 	$lang = $_GET['lang'] ?? '';
 
 	// Language codes are user-definable: copy Polylang's filtering.
@@ -155,7 +156,6 @@ function _polylang_set_sitemap_language() {
  *              in this case we can use term_id since we're specifying the taxonomy directly.
  *              WordPress 4.4.0 and later also rectifies term_id/term_taxonomy_id stratification, which is
  *              why we couldn't find an issue whilst introducing this filter.
- * @access private
  *
  * @param array $args The query arguments.
  * @return array The augmented query arguments.
@@ -204,7 +204,6 @@ function _polylang_sitemap_append_non_translatables( $args ) {
  * @hook the_seo_framework_generated_description 10
  * @hook the_seo_framework_custom_field_description 10
  * @since 3.1.0
- * @access private
  *
  * @param string $string The title or description
  * @return string
@@ -227,7 +226,6 @@ function pll__( $string ) {
  * @since 4.0.5
  * @since 5.0.0 Removed clearing once-per-request restriction.
  * @global \wpdb $wpdb
- * @access private
  */
 function _polylang_flush_sitemap() {
 	global $wpdb;
@@ -317,7 +315,7 @@ function _hijack_polylang_home_url() {
 				return \call_user_func_array( $default_cb, $args );
 
 			// Trick Polylang.
-			// phpcs:ignore, WordPress.WP.GlobalVariablesOverride.Prohibited -- it's called a hijack for a reason.
+			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- it's called a hijack for a reason.
 			$wp_actions['template_redirect'] = 1;
 
 			$url = \call_user_func_array( $default_cb, $args );
@@ -350,4 +348,30 @@ function _polylang_allow_tsf_home_url( $allow_list ) {
 	$allow_list[] = [ 'file' => \THE_SEO_FRAMEWORK_DIR_PATH ];
 
 	return $allow_list;
+}
+
+/**
+ * Polylang and TSF race to prepend their column keys on terms to 'posts'.
+ *
+ * This filter forces TSF to be put before the language selection of Polylang
+ * by prioritizing their column keys to what TSF will prepend itself to.
+ *
+ * @since 5.1.0
+ *
+ * @param string[] $order_keys The column keys order.
+ * @return string[] The column keys order.
+ */
+function _polylang_seo_column_keys_order( $order_keys ) {
+
+	if ( ! \function_exists( 'PLL' ) || ! ( \PLL() instanceof \PLL_Admin ) )
+		return $order_keys;
+
+	$language_keys = array_map(
+		fn( $language ) => "language_{$language->slug}",
+		\PLL()->model->get_languages_list(),
+	);
+
+	array_unshift( $order_keys, ...$language_keys );
+
+	return $order_keys;
 }
