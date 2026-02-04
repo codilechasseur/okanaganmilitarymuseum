@@ -1,0 +1,38 @@
+/*
+ Theme Name:     Okanagan Military Museum
+ Theme URI:      https://www.kelownamuseums.ca
+ Description:    OMM Child Theme
+ Author:         By Jove Co.
+ Author URI:     https://byjoveco.com
+ Template:       Divi
+ Version:        1.0.0
+*/
+ 
+ 
+/* =Theme customization starts here
+------------------------------------------------------- 
+
+/*------------------------------------------------*/
+/*---------[BLOCKS IMAGE CAPTION FORMATTING]-----------*/
+/*------------------------------------------------*/
+ 
+.wp-block-image figcaption {
+    margin-top: .2em;
+    margin-bottom: 1em;
+    text-align: center;
+    font-size: 13px;
+    font-style: italic;
+    color: #888282;
+}
+
+/*------------------------------------------------*/
+/*---------[HIDE ARTICLE CATEGORY MENU]-----------*/
+/*------------------------------------------------*/
+
+.hide-mobile-category-menu.et_pb_menu .et_pb_menu__menu,.hide-mobile-category-menu.et_pb_fullwidth_menu .et_pb_menu__menu {
+    display: flex!important;
+}
+ 
+.hide-mobile-category-menu .et_mobile_nav_menu {
+    display: none;
+}
